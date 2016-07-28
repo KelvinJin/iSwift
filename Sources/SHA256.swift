@@ -7,7 +7,7 @@
 //  Swift wrapper for CCHmac
 
 import Foundation
-import CommonCrypto
+import Cryptor
 
 extension UInt8 {
     private static let allHexits: [Character] = "0123456789abcdef".characters.flatMap { $0 }
@@ -32,13 +32,9 @@ public class SHA256 {
     }
     
     func digest() -> [UInt8] {
-        var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+        let hmac = HMAC(using: HMAC.Algorithm.sha256, key: key)
         
-        let keyStr = key.utf8.map { Int8($0) }
-        
-        CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyStr, keyStr.count, bytes, bytes.count, &hash)
-        
-        return hash
+        return hmac.update(byteArray: bytes)!.final()
     }
     
     // Takes a string representation of a hexadecimal number

@@ -7,10 +7,11 @@
 //
 
 import Foundation
+import Jay
 
 protocol JSONConvertable {
-    static func fromJSON(_ json: [String: AnyObject]) -> Self?
-    func toJSON() -> [String: AnyObject]
+    static func fromJSON(_ json: [String: Any]) -> Self?
+    func toJSON() -> [String: Any]
 }
 
 extension JSONConvertable {
@@ -21,13 +22,10 @@ extension JSONConvertable {
     }
 }
 
-extension Dictionary where Key: StringLiteralConvertible, Value: AnyObject {
+extension Dictionary where Key: StringLiteralConvertible, Value: Any {
     func toData() -> Data {
         do {
-            if let dict = (self as? AnyObject) as? Dictionary<String, AnyObject> {
-                return try JSONSerialization.data(withJSONObject: dict, options: [])
-            }
-            return Data()
+            return try Jay(formatting: .prettified).dataFromJson(anyDictionary: self)
         } catch let e {
             print("NSJSONSerialization Error: \(e)")
             return Data()
@@ -38,7 +36,7 @@ extension Dictionary where Key: StringLiteralConvertible, Value: AnyObject {
         let data = toData()
         let count = data.count
         var bytes = [UInt8](repeating: 0, count: count)
-        (data as NSData).getBytes(&bytes, length: count)
+        data.copyBytes(to: bytes, count: count)
         
         return bytes
     }

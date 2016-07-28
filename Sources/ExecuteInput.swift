@@ -11,11 +11,11 @@ import Foundation
 struct ExecuteInput: Contentable {
     let code: String
     let executionCount: Int
-    
+
     func toJSON() -> [String : AnyObject] {
         return ["code": code, "execution_count": executionCount]
     }
-    
+
     static func fromJSON(_ json: [String : AnyObject]) -> ExecuteInput? {
         return nil
     }
