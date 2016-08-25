@@ -18,14 +18,15 @@ extension JSONConvertable {
     func toData() -> Data { return toJSON().toData() }
     func toBytes() -> [UInt8] { return toJSON().toBytes() }
     func toJSONString() -> String {
-        return (NSString(data: toData(), encoding: String.Encoding.utf8.rawValue) ?? "") as String
+        return (String(data: toData(), encoding: .utf8) ?? "")
     }
 }
 
-extension Dictionary where Key: StringLiteralConvertible, Value: Any {
+extension Dictionary {
     func toData() -> Data {
         do {
-            return try Jay(formatting: .prettified).dataFromJson(anyDictionary: self)
+            let bytes = try Jay(formatting: .prettified).dataFromJson(any: self)
+            return Data(bytes: bytes)
         } catch let e {
             print("NSJSONSerialization Error: \(e)")
             return Data()
@@ -36,7 +37,7 @@ extension Dictionary where Key: StringLiteralConvertible, Value: Any {
         let data = toData()
         let count = data.count
         var bytes = [UInt8](repeating: 0, count: count)
-        data.copyBytes(to: bytes, count: count)
+        data.copyBytes(to: &bytes, count: count)
         
         return bytes
     }

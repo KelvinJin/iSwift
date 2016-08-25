@@ -46,7 +46,7 @@ class Message {
     let parentHeader: Header?
     
     /// Any metadata associated with the message.
-    let metadata: [String: AnyObject]
+    let metadata: [String: Any]
     
     /// The actual content of the message must be a dict, whose structure
     /// depends on the message type.
@@ -54,7 +54,7 @@ class Message {
     
     let extraBlobs: [String]
     
-    init(signature: String = "", header: Header, parentHeader: Header?, metadata: [String: AnyObject], content: Contentable, extraBlobs: [String] = []) {
+    init(signature: String = "", header: Header, parentHeader: Header?, metadata: [String: Any], content: Contentable, extraBlobs: [String] = []) {
         self.signature = signature
         self.header = header
         self.parentHeader = parentHeader
@@ -66,7 +66,7 @@ class Message {
     func toSHA256(_ key: String) -> String {
         let digestor = SHA256(key: key)
         
-        let emptyDict: [String: AnyObject] = [:]
+        let emptyDict: [String: Any] = [:]
         
         digestor.update(header.toBytes())
         digestor.update(parentHeader?.toBytes() ?? emptyDict.toBytes())

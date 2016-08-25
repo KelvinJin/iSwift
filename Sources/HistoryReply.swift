@@ -12,11 +12,11 @@ struct HistoryReply: Contentable {
     /// If True, also return output history in the resulting dict.
     let history: [(Int, Int, String)]
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return ["history": []]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> HistoryReply? {
+    static func fromJSON(_ json: [String : Any]) -> HistoryReply? {
         return nil
     }
 }

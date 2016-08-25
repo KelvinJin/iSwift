@@ -102,7 +102,7 @@ class SocketIn {
         return Message(signature: signature, header: header, parentHeader: parentHeader, metadata: metadata, content: content, extraBlobs: extraBlobs)
     }
     
-    static private func parse<T>(_ str: String, converter: (([String: AnyObject]) -> T?)) throws -> T {
+    static private func parse<T>(_ str: String, converter: (([String: Any]) -> T?)) throws -> T {
         guard let json = str.toJSON() else {
             print(str)
             throw Error.socketError("Parse \(str) to JSON failed.")

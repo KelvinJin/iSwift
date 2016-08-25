@@ -18,7 +18,7 @@ extension String {
             if let index = openBrackets.index(of: c) {
                 stack.push(index)
             } else if let index = closeBrackets.index(of: c) {
-                guard let openIndex = stack.pop() where openIndex == index else {
+                guard let openIndex = stack.pop(), openIndex == index else {
                     return false
                 }
             }

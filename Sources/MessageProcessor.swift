@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Dispatch
 
 class MessageProcessor {
     static var executionCount: Int {
@@ -87,7 +88,7 @@ class MessageProcessor {
     }
     
     private static func sendIOPubMessage(_ type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: AnyObject] = [:]) {
-        DispatchQueue.global(attributes: DispatchQueue.GlobalAttributes.qosDefault).async { () -> Void in
+        DispatchQueue.global(qos: .default).async { () -> Void in
             let header = Header(session: session, msgType: type)
             let message = Message(header: header, parentHeader: parentHeader, metadata: metadata, content: content)
             NotificationCenter.default.post(name: Notification.Name(rawValue: "IOPubNotification"), object: message, userInfo: nil)

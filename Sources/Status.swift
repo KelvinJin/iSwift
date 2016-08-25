@@ -11,11 +11,11 @@ import Foundation
 struct Status: Contentable {
     let executionState: String
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return ["execution_state": executionState]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> Status? {
+    static func fromJSON(_ json: [String : Any]) -> Status? {
         return nil
     }
 }

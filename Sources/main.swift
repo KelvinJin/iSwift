@@ -8,4 +8,4 @@
 
 import Foundation
 
-Kernel.sharedInstance.start(Process.arguments)
+Kernel.sharedInstance.start(CommandLine.arguments)

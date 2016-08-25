@@ -27,8 +27,8 @@ struct ExecuteReply: Contentable {
     /// Results for the user_expressions.
     let userExpressions: UserExpressions?
     
-    func toJSON() -> [String : AnyObject] {
-        var base = ["status": status.rawValue, "execution_count": executionCount] as [String: AnyObject]
+    func toJSON() -> [String : Any] {
+        var base = ["status": status.rawValue, "execution_count": executionCount] as [String: Any]
         
         if status == .Ok {
             if let userExpressions = userExpressions {
@@ -39,7 +39,7 @@ struct ExecuteReply: Contentable {
         return base
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> ExecuteReply? {
+    static func fromJSON(_ json: [String : Any]) -> ExecuteReply? {
         return nil
     }
 }

@@ -11,11 +11,11 @@ import Foundation
 struct ShutdownReply: Contentable {
     let restart: Bool
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return ["restart": restart]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> ShutdownReply? {
+    static func fromJSON(_ json: [String : Any]) -> ShutdownReply? {
         return nil
     }
 }

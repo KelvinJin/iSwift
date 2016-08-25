@@ -27,11 +27,11 @@ struct UserExpressions: JSONConvertable {
     /// written.
     let traceback: [String]
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return [:]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> UserExpressions? {
+    static func fromJSON(_ json: [String : Any]) -> UserExpressions? {
         return nil
     }
 }
@@ -72,11 +72,11 @@ struct ExecuteRequest: Contentable {
     /// This allows the queued execution of multiple execute_requests, even if they generate exceptions.
     let stopOnError: Bool
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return [:]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> ExecuteRequest? {
+    static func fromJSON(_ json: [String : Any]) -> ExecuteRequest? {
         guard let code = json["code"] as? String else { return nil }
         
         let silent = json["silent"] as? Bool ?? false

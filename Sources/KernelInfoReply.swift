@@ -14,11 +14,11 @@ struct LanguageInfo: JSONConvertable {
     let mimetype: String = "text/swift"
     let fileExtension: String = ".swift"
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return ["name": name, "version": version, "mimetype": mimetype, "file_extension": fileExtension]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> LanguageInfo? {
+    static func fromJSON(_ json: [String : Any]) -> LanguageInfo? {
         return nil
     }
 }
@@ -30,7 +30,7 @@ struct KernelInfoReply: Contentable {
     let languageInfo: LanguageInfo = LanguageInfo()
     let banner: String = "Swift Kernel - An Online Swift Playground"
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return ["protocol_version": protocolVersion,
             "implemetation": implemetation,
             "implementation_version": implemetationVersion,
@@ -38,7 +38,7 @@ struct KernelInfoReply: Contentable {
             "banner": banner]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> KernelInfoReply? {
+    static func fromJSON(_ json: [String : Any]) -> KernelInfoReply? {
         return nil
     }
 }

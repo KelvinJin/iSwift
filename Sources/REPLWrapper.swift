@@ -7,11 +7,32 @@
 //
 
 import Foundation
+import Dispatch
 
 enum REPLState {
     case prompt
     case input
     case output
+}
+
+class Disposable {
+    func dispose() {
+        
+    }
+}
+
+class Observable<T> {
+    init(_ initValue: T) {
+        
+    }
+    
+    func next(_ nextValue: T) {
+        
+    }
+    
+    func observeNew(block: (T) -> Void) -> Disposable {
+        return Disposable()
+    }
 }
 
 class REPLWrapper: NSObject {
@@ -38,7 +59,7 @@ class REPLWrapper: NSObject {
     func didReceivedData(_ notification: Notification) {
         let data = communicator.availableData
         
-        guard let dataStr = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as? String else { return }
+        guard let dataStr = String(data: data, encoding: .utf8) else { return }
         
         // For every data the console gives, it can be a new prompt or a continue prompt or an actual output.
         // We'll need to deal with it accordingly.
@@ -65,7 +86,7 @@ class REPLWrapper: NSObject {
             }
         }
         
-        communicator.waitForDataInBackgroundAndNotify(forModes: runModes as! [RunLoopMode])
+        communicator.waitForDataInBackgroundAndNotify(forModes: runModes)
     }
     
     func taskDidTerminated(_ notification: Notification) {
@@ -109,7 +130,7 @@ class REPLWrapper: NSObject {
     }
     
     private func launchTaskInBackground() throws {
-        DispatchQueue.global(attributes: DispatchQueue.GlobalAttributes.qosDefault).async { [unowned self] in
+        DispatchQueue.global(qos: .default).async { [unowned self] in
             do {
                 try self.launchTask()
             } catch let e {
@@ -126,13 +147,25 @@ class REPLWrapper: NSObject {
         
         communicator = try currentTask.masterSideOfPTY()
         
-        NotificationCenter.default.addObserver(self, selector: #selector(REPLWrapper.didReceivedData(_:)),
-            name: NSNotification.Name.NSFileHandleDataAvailable, object: nil)
+        #if os(Linux)
+            NotificationCenter.default.addObserverForName(NSNotification.Name.NSFileHandleDataAvailable, object: nil, queue: nil) {
+                self.didReceivedData($0)
+            }
+        #else
+            NotificationCenter.default.addObserver(self, selector: #selector(REPLWrapper.didReceivedData(_:)),
+                                                   name: NSNotification.Name.NSFileHandleDataAvailable, object: nil)
+        #endif
         
-        communicator.waitForDataInBackgroundAndNotify(forModes: runModes as! [RunLoopMode])
+        communicator.waitForDataInBackgroundAndNotify(forModes: runModes)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(REPLWrapper.taskDidTerminated(_:)),
-            name: Task.didTerminateNotification, object: nil)
+        #if os(Linux)
+            NotificationCenter.default.addObserverForName(Task.didTerminateNotification, object: nil, queue: nil) {
+                self.taskDidTerminated($0)
+            }
+        #else
+            NotificationCenter.default.addObserver(self, selector: #selector(REPLWrapper.taskDidTerminated(_:)),
+                                                   name: Task.didTerminateNotification, object: nil)
+        #endif
         
         currentTask.launch()
         

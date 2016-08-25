@@ -14,28 +14,14 @@ private var ISO8601DateFormatter: DateFormatter {
     return dateFormatter
 }
 
-#if os(Linux)
-    extension NSDate {
-        func toISO8601String() -> String {
-            return ISO8601DateFormatter.string(from: self)
-        }
+extension Date {
+    func toISO8601String() -> String {
+        return ISO8601DateFormatter.string(from: self)
     }
-    
-    extension String {
-        func toISO8601Date() -> NSDate? {
-            return ISO8601DateFormatter.date(from: self)
-        }
+}
+
+extension String {
+    func toISO8601Date() -> Date? {
+        return ISO8601DateFormatter.date(from: self)
     }
-#else
-    extension Date {
-        func toISO8601String() -> String {
-            return ISO8601DateFormatter.string(from: self)
-        }
-    }
-    
-    extension String {
-        func toISO8601Date() -> Date? {
-            return ISO8601DateFormatter.date(from: self)
-        }
-    }
-#endif
+}

@@ -11,11 +11,11 @@ import Foundation
 struct IsCompleteRequest: Contentable {
     let code: String
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return [:]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> IsCompleteRequest? {
+    static func fromJSON(_ json: [String : Any]) -> IsCompleteRequest? {
         guard let code = json["code"] as? String else { return nil }
         
         return IsCompleteRequest(code: code)

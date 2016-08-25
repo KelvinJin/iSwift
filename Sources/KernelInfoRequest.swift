@@ -9,11 +9,11 @@
 import Foundation
 
 struct KernelInfoRequest: Contentable {
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return [:]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> KernelInfoRequest? {
+    static func fromJSON(_ json: [String : Any]) -> KernelInfoRequest? {
         return KernelInfoRequest()
     }
 }

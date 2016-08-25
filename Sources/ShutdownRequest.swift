@@ -12,11 +12,11 @@ struct ShutdownRequest: Contentable {
     /// False if final shutdown, or True if shutdown precedes a restart
     let restart: Bool
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return [:]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> ShutdownRequest? {
+    static func fromJSON(_ json: [String : Any]) -> ShutdownRequest? {
         let restart = json["restart"] as? Bool ?? false
         
         return ShutdownRequest(restart: restart)

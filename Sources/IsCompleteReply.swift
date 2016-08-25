@@ -12,7 +12,7 @@ struct IsCompleteReply: Contentable {
     let status: String
     let indent: String?
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         if let indent = indent {
             return ["status": status, "indent": indent]
         } else {
@@ -20,7 +20,7 @@ struct IsCompleteReply: Contentable {
         }
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> IsCompleteReply? {
+    static func fromJSON(_ json: [String : Any]) -> IsCompleteReply? {
         return nil
     }
 }

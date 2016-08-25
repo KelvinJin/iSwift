@@ -8,6 +8,7 @@
 
 import Foundation
 import ZeroMQ
+import Dispatch
 
 // We can only send message one by one. This is for sure.
 private let SocketSendQueue = DispatchQueue(label: "iSwiftCore.Socket", attributes: [])

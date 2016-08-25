@@ -7,15 +7,16 @@
 //
 
 import Foundation
+import Dispatch
 
 class TaskFactory {
     private let taskQueue: DispatchQueue
     
     init() {
-        taskQueue = DispatchQueue(label: "\(self.dynamicType).\(UUID().uuidString)", attributes: DispatchQueueAttributes.concurrent)
+        taskQueue = DispatchQueue(label: "\(type(of: self)).\(UUID().uuidString)", attributes: .concurrent)
     }
     
-    func startNew(_ taskBlock: ()->()) {
+    func startNew(_ taskBlock: @escaping ()->()) {
         taskQueue.async(execute: taskBlock)
     }
     

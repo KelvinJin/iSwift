@@ -8,22 +8,26 @@
 
 import Foundation
 
+#if os(Linux)
+    typealias NSRegularExpression = RegularExpression
+#endif
+
 struct Regex {
     var pattern: String {
         didSet {
             updateRegex()
         }
     }
-    var expressionOptions: RegularExpression.Options {
+    var expressionOptions: NSRegularExpression.Options {
         didSet {
             updateRegex()
         }
     }
-    var matchingOptions: RegularExpression.MatchingOptions
+    var matchingOptions: NSRegularExpression.MatchingOptions
     
-    var regex: RegularExpression?
+    var regex: NSRegularExpression?
     
-    init(pattern: String, expressionOptions: RegularExpression.Options = RegularExpression.Options(), matchingOptions: RegularExpression.MatchingOptions = RegularExpression.MatchingOptions()) {
+    init(pattern: String, expressionOptions: NSRegularExpression.Options = NSRegularExpression.Options(), matchingOptions: NSRegularExpression.MatchingOptions = NSRegularExpression.MatchingOptions()) {
         self.pattern = pattern
         self.expressionOptions = expressionOptions
         self.matchingOptions = matchingOptions
@@ -31,7 +35,7 @@ struct Regex {
     }
     
     mutating func updateRegex() {
-        regex = try? RegularExpression(pattern: pattern, options: expressionOptions)
+        regex = try? NSRegularExpression(pattern: pattern, options: expressionOptions)
     }
 }
 
@@ -46,7 +50,7 @@ extension String {
         return false
     }
     
-    func match(_ patternString: String, options: RegularExpression.Options = [.anchorsMatchLines]) -> Bool {
+    func match(_ patternString: String, options: NSRegularExpression.Options = [.anchorsMatchLines]) -> Bool {
         return self.matchRegex(Regex(pattern: patternString, expressionOptions: options))
     }
     

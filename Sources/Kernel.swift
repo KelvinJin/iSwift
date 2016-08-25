@@ -10,10 +10,11 @@ import Foundation
 import ZeroMQ
 import CommandLine
 import C7
+import Dispatch
 
 private let loggerLevel = 30
 
-enum Error: ErrorProtocol {
+enum Error: Swift.Error {
     case socketError(String)
     case generalError(String)
 }
@@ -36,12 +37,16 @@ let connectionFileOption = StringOption(shortFlag: "f", longFlag: "file", requir
 
 extension String {
     func isUUID() -> Bool {
-        return UUID(uuidString: self) != nil
+        #if os(Linux)
+            return NSUUID(UUIDString: self) != nil
+        #else
+            return UUID(uuidString: self) != nil
+        #endif
     }
     
     func toJSON() -> [String: AnyObject]? {
         guard let data = data(using: String.Encoding.utf8),
-            json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: AnyObject] else {
+            let json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: AnyObject] else {
                 Logger.info.print("Convert to JSON failed.")
                 return nil
         }
@@ -50,13 +55,13 @@ extension String {
     }
 }
 
-@objc public class Kernel: NSObject {
+public class Kernel {
     public static let sharedInstance = Kernel()
     
     private var totalExecutionCount = 0
     
     let context = try? Context()
-    let socketQueue = DispatchQueue(label: "com.uthoft.iswift.kernel.socketqueue",  attributes: DispatchQueueAttributes.concurrent)
+    let socketQueue = DispatchQueue(label: "com.uthoft.iswift.kernel.socketqueue",  attributes: Dispatch.DispatchQueue.Attributes.concurrent)
     
     public func start(_ arguments: [String]) {
         let cli = CommandLine(arguments: arguments)
@@ -71,8 +76,8 @@ extension String {
         let connectionFileUrl = URL(fileURLWithPath: connectionFilePath)
         
         guard let connectionFileData = try? Data(contentsOf: connectionFileUrl),
-        connectionFile = (try? JSONSerialization.jsonObject(with: connectionFileData, options: [])) as? [String: AnyObject],
-        connection = Connection.mapToObject(connectionFile) else {
+        let connectionFile = (try? JSONSerialization.jsonObject(with: connectionFileData, options: [])) as? [String: AnyObject],
+        let connection = Connection.mapToObject(connectionFile) else {
             Logger.info.print("Connection file invalid.")
             return
         }
@@ -134,15 +139,15 @@ extension String {
         }) 
     }
     
-    private func createSocket(_ context: Context, transport: TransportType, ip: String, port: Int, type: SocketType, dataHandler: (data: C7.Data, socket: Socket) -> Void) throws {
+    private func createSocket(_ context: Context, transport: TransportType, ip: String, port: Int, type: SocketType, dataHandler: @escaping (C7.Data, Socket) -> Void) throws {
         // Create a heart beat connection that will reply anything it receives.
         let socket = try context.socket(type)
         try socket.bind("\(transport.rawValue)://\(ip):\(port)")
         
         socketQueue.async {
             do {
-                while let data = try socket.receive() where data.count > 0 {
-                    dataHandler(data: data, socket: socket)
+                while let data = try socket.receive(), data.count > 0 {
+                    dataHandler(data, socket)
                 }
             } catch let e {
                 Logger.info.print("Socket exception...\(e)")

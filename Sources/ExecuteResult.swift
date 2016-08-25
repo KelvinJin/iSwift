@@ -10,14 +10,14 @@ import Foundation
 
 struct ExecuteResult: Contentable {
     let executionCount: Int
-    let data: [String: AnyObject]
-    let metadata: [String: AnyObject]
+    let data: [String: Any]
+    let metadata: [String: Any]
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return ["execution_count": executionCount, "data": data, "metadata": metadata]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> ExecuteResult? {
+    static func fromJSON(_ json: [String : Any]) -> ExecuteResult? {
         return nil
     }
 }

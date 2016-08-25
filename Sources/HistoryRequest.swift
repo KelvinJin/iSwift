@@ -38,11 +38,11 @@ struct HistoryRequest: Contentable {
     /// include duplicated history.  Default is false.
     let unique: Bool
     
-    func toJSON() -> [String : AnyObject] {
+    func toJSON() -> [String : Any] {
         return [:]
     }
     
-    static func fromJSON(_ json: [String : AnyObject]) -> HistoryRequest? {
+    static func fromJSON(_ json: [String : Any]) -> HistoryRequest? {
         guard let histAccessType = json["hist_access_type"] as? String
             else { return nil }
         
