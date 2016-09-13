@@ -19,14 +19,23 @@ class MessageProcessor {
     
     static var session: String = ""
     
+    #if os(Linux)
+    
+    // FIXME, need to find a better way to specify the path of the swift command.
+    fileprivate static let replWrapper = try! REPLWrapper(command: "/root/swift-DEVELOPMENT-SNAPSHOT-2016-09-11-a-ubuntu14.04/usr/bin/swift", prompt: "^\\s*\\d+>\\s*$", continuePrompt: "^\\s*\\d+\\.\\s*$")
+    
+    #else
+    
     fileprivate static let replWrapper = try! REPLWrapper(command: "/usr/bin/swift", prompt: "^\\s*\\d+>\\s*$", continuePrompt: "^\\s*\\d+\\.\\s*$")
+    
+    #endif
     
     static func run(_ inMessageQueue: BlockingQueue<Message>, outMessageQueue: BlockingQueue<Message>) {
         while true {
             let message = inMessageQueue.take()
             let requestHeader = message.header
             
-            Logger.debug.print("Processing new message...")
+            Logger.debug.print("Processing new message...\(message.header.msgType)")
             
             guard let replyType = requestHeader.msgType.replyType else { continue }
             
@@ -69,7 +78,7 @@ class MessageProcessor {
         }
     }
     
-    fileprivate static func execute(_ cmd: String, executionCount: Int, parentHeader: Header, metadata: [String: AnyObject]) {
+    fileprivate static func execute(_ cmd: String, executionCount: Int, parentHeader: Header, metadata: [String: Any]) {
         if session.isEmpty {
             session = parentHeader.session
             
@@ -87,7 +96,7 @@ class MessageProcessor {
         sendIOPubMessage(.ExecuteResult, content: content, parentHeader: parentHeader)
     }
     
-    fileprivate static func sendIOPubMessage(_ type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: AnyObject] = [:]) {
+    fileprivate static func sendIOPubMessage(_ type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: Any] = [:]) {
         DispatchQueue.global(qos: .default).async { () -> Void in
             let header = Header(session: session, msgType: type)
             let message = Message(header: header, parentHeader: parentHeader, metadata: metadata, content: content)
