@@ -17,7 +17,7 @@ enum TaskError: Swift.Error {
 
 class Printer {
     static func print(_ msg: String) {
-        Swift.print(msg)
+        Logger.info.print(msg)
     }
 }
 
