@@ -10,6 +10,9 @@ import Foundation
 
 #if os(Linux)
     typealias NSRegularExpression = RegularExpression
+    typealias RegularExpressionMatchingOptions = NSMatchingOptions
+#else
+    typealias RegularExpressionMatchingOptions = NSRegularExpression.MatchingOptions
 #endif
 
 struct Regex {
@@ -23,11 +26,11 @@ struct Regex {
             updateRegex()
         }
     }
-    var matchingOptions: NSRegularExpression.MatchingOptions
+    var matchingOptions: RegularExpressionMatchingOptions
     
     var regex: NSRegularExpression?
     
-    init(pattern: String, expressionOptions: NSRegularExpression.Options = NSRegularExpression.Options(), matchingOptions: NSRegularExpression.MatchingOptions = NSRegularExpression.MatchingOptions()) {
+    init(pattern: String, expressionOptions: NSRegularExpression.Options = NSRegularExpression.Options(), matchingOptions: RegularExpressionMatchingOptions = RegularExpressionMatchingOptions()) {
         self.pattern = pattern
         self.expressionOptions = expressionOptions
         self.matchingOptions = matchingOptions

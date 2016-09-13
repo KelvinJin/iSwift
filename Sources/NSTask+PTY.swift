@@ -10,9 +10,8 @@ import Foundation
 import ObjectiveCMap
 
 #if os(Linux)
-    
 #else
-    typealias Task = CommandLine
+    typealias Task = Process
 #endif
 
 extension Task {

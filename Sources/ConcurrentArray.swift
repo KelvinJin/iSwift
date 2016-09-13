@@ -8,8 +8,9 @@
 
 import Foundation
 
-class ConcurrentArray<T> {
+class ConcurrentArray<T>: Lockable {
     fileprivate var dataSource: Array<T>
+    var lock: NSLocking = NSLock()
     
     init() {
         self.dataSource = [T]()

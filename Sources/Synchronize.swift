@@ -8,10 +8,14 @@
 
 import Foundation
 
-func synchronized<T>(_ lock: AnyObject, closure: () throws -> T) rethrows -> T {
-    objc_sync_enter(lock)
+protocol Lockable {
+    var lock: NSLocking { get }
+}
+
+func synchronized<T>(_ lockable: Lockable, closure: () throws -> T) rethrows -> T {
+    lockable.lock.lock()
     defer {
-        objc_sync_exit(lock)
+        lockable.lock.unlock()
     }
     return try closure()
 }

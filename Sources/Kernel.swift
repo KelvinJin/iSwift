@@ -35,15 +35,7 @@ enum Logger: Int {
 let connectionFileOption = StringOption(shortFlag: "f", longFlag: "file", required: true,
     helpMessage: "Path to the output file.")
 
-extension String {
-    func isUUID() -> Bool {
-        #if os(Linux)
-            return NSUUID(UUIDString: self) != nil
-        #else
-            return UUID(uuidString: self) != nil
-        #endif
-    }
-    
+extension String {    
     func toJSON() -> [String: AnyObject]? {
         guard let data = data(using: String.Encoding.utf8),
             let json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: AnyObject] else {
@@ -105,7 +97,8 @@ open class Kernel {
             
             let ioPubSocket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.iopubPort, type: .pub)
             
-            NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "IOPubNotification"), object: nil, queue: OperationQueue(), using: { (notification) -> Void in
+            NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "IOPubNotification"), object: nil, queue: OperationQueue())
+            { (notification) -> Void in
                 if let resultMessage = notification.object as? Message {
                     do {
                         try ioPubSocket.sendMessage(resultMessage)
@@ -115,7 +108,7 @@ open class Kernel {
                 } else {
                     Logger.critical.print("Notification object invalid. This shouldn't happen!")
                 }
-            })
+            }
             
             try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.stdinPort, type: SocketType.router) { data, socket in
                 Logger.info.print("Received stdin data.")

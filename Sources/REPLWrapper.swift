@@ -148,7 +148,7 @@ class REPLWrapper: NSObject {
         communicator = try currentTask.masterSideOfPTY()
         
         #if os(Linux)
-            NotificationCenter.default.addObserverForName(NSNotification.Name.NSFileHandleDataAvailable, object: nil, queue: nil) {
+            NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable, object: nil, queue: nil) {
                 self.didReceivedData($0)
             }
         #else
@@ -159,7 +159,7 @@ class REPLWrapper: NSObject {
         communicator.waitForDataInBackgroundAndNotify(forModes: runModes)
         
         #if os(Linux)
-            NotificationCenter.default.addObserverForName(Task.didTerminateNotification, object: nil, queue: nil) {
+            NotificationCenter.default.addObserver(forName: Task.didTerminateNotification, object: nil, queue: nil) {
                 self.taskDidTerminated($0)
             }
         #else
