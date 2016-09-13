@@ -31,12 +31,17 @@ class Observable<T> {
     
     func next(_ nextValue: T) {
         curValue = nextValue
+        
+        Logger.debug.print("Next observale...")
+        
         for observer in observers {
             observer(curValue)
         }
     }
     
     func observeNew(_ block: @escaping (T) -> Void) -> Disposable {
+        Logger.debug.print("observale New...")
+        
         observers.append(block)
         return Disposable()
     }
@@ -46,10 +51,9 @@ class REPLWrapper: NSObject {
     fileprivate let command: String
     fileprivate var prompt: String
     fileprivate var continuePrompt: String
-    fileprivate var communicator: FileHandle!
     fileprivate var lastOutput: String = ""
     fileprivate var consoleOutput = Observable<String>("")
-    fileprivate var currentTask: Task!
+    fileprivate var currentTask: Shell!
     
     fileprivate let runModes = [RunLoopMode.defaultRunLoopMode]
     
@@ -64,9 +68,13 @@ class REPLWrapper: NSObject {
     }
     
     func didReceivedData(_ notification: Notification) {
-        let data = communicator.availableData
+        let data = currentTask.availableData
+        
+        Logger.debug.print("Get notification...")
         
         guard let dataStr = String(data: data, encoding: .utf8) else { return }
+        
+        Logger.debug.print("Received data...\(dataStr)")
         
         // For every data the console gives, it can be a new prompt or a continue prompt or an actual output.
         // We'll need to deal with it accordingly.
@@ -80,10 +88,13 @@ class REPLWrapper: NSObject {
         
         // Sometimes, the output will contain multiline string. We can't deal with them once. We
         // need to separater them, so that the prompt is dealt in time and the raw output will be captured.
-        let lines = dataStr.components(separatedBy: CharacterSet.newlines)
+        // FIXME: On Linux, dataStr.components(separatedBy: CharacterSet.newlines) will fail when dataStr is "\r\n"
+        let lines = dataStr.components(separatedBy: "\r\n")
         
         for (index, line) in lines.enumerated() {
             guard !line.isEmpty else { continue }
+            
+            Logger.debug.print("Received data line...\(line)")
             
             // Don't remember to add a new line to compensate the loss of the non last line.
             if index == lines.count - 1 && !dataStr.hasSuffix("\n") {
@@ -93,7 +104,7 @@ class REPLWrapper: NSObject {
             }
         }
         
-        communicator.waitForDataInBackgroundAndNotify(forModes: runModes)
+        currentTask.waitForDataInBackgroundAndNotify(forModes: runModes)
     }
     
     func taskDidTerminated(_ notification: Notification) {
@@ -103,6 +114,8 @@ class REPLWrapper: NSObject {
     func runCommand(_ cmd: String) -> String {
         // Clear the previous output.
         var currentOutput = ""
+        
+        Logger.debug.print("Running command...\(cmd)")
         
         // We'll observe the output stream and make sure all non-prompts gets recorded into output.
         
@@ -149,32 +162,30 @@ class REPLWrapper: NSObject {
     }
     
     fileprivate func launchTask() throws {
-        currentTask = Task()
+        currentTask = Shell()
         currentTask.launchPath = command
         
-        communicator = try currentTask.masterSideOfPTY()
-        
         #if os(Linux)
-            NotificationCenter.default.addObserver(forName: Task.dataAvailableNotification, object: nil, queue: nil) {
+            NotificationCenter.default.addObserver(forName: Shell.dataAvailableNotification, object: nil, queue: nil) {
                 self.didReceivedData($0)
             }
         #else
             NotificationCenter.default.addObserver(self, selector: #selector(REPLWrapper.didReceivedData(_:)),
-                                                   name: NSNotification.Name.NSFileHandleDataAvailable, object: nil)
+                                                   name: Shell.dataAvailableNotification, object: nil)
         #endif
         
-        communicator.waitForDataInBackgroundAndNotify(forModes: runModes)
+        currentTask.waitForDataInBackgroundAndNotify(forModes: runModes)
         
         #if os(Linux)
-            NotificationCenter.default.addObserver(forName: Task.didTerminateNotification, object: nil, queue: nil) {
+            NotificationCenter.default.addObserver(forName: Shell.didTerminateNotification, object: nil, queue: nil) {
                 self.taskDidTerminated($0)
             }
         #else
             NotificationCenter.default.addObserver(self, selector: #selector(REPLWrapper.taskDidTerminated(_:)),
-                                                   name: Task.didTerminateNotification, object: nil)
+                                                   name: Shell.didTerminateNotification, object: nil)
         #endif
         
-        currentTask.launch()
+        try currentTask.launch()
         
         currentTask.waitUntilExit()
     }
@@ -188,7 +199,7 @@ class REPLWrapper: NSObject {
         trimmedLine += "\n"
         
         if let codeData = trimmedLine.data(using: String.Encoding.utf8) {
-            communicator.write(codeData)
+            currentTask.writeWith(codeData)
         }
     }
     
@@ -196,6 +207,8 @@ class REPLWrapper: NSObject {
         let promptSemaphore = DispatchSemaphore(value: 0)
         
         let dispose = consoleOutput.observeNew {(output) -> Void in
+            Logger.debug.print("Console output \(output)")
+            
             for pattern in patterns where output.match(pattern) {
                 promptSemaphore.signal()
                 return
@@ -204,6 +217,8 @@ class REPLWrapper: NSObject {
         }
         
         promptSemaphore.wait(timeout: DispatchTime.distantFuture)
+        
+        Logger.debug.print("Expect passed...")
         
         dispose.dispose()
     }
