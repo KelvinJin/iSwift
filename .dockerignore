@@ -1,0 +1,5 @@
+Packages/
+iSwift.xcodeproj/
+.build/
+.dockerignore
+Dockerfile
