@@ -22,15 +22,22 @@ class Disposable {
 }
 
 class Observable<T> {
+    private var observers: [(T) -> Void] = []
+    private var curValue: T
+    
     init(_ initValue: T) {
-        
+        curValue = initValue
     }
     
     func next(_ nextValue: T) {
-        
+        curValue = nextValue
+        for observer in observers {
+            observer(curValue)
+        }
     }
     
-    func observeNew(_ block: (T) -> Void) -> Disposable {
+    func observeNew(_ block: @escaping (T) -> Void) -> Disposable {
+        observers.append(block)
         return Disposable()
     }
 }
@@ -148,7 +155,7 @@ class REPLWrapper: NSObject {
         communicator = try currentTask.masterSideOfPTY()
         
         #if os(Linux)
-            NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable, object: nil, queue: nil) {
+            NotificationCenter.default.addObserver(forName: Task.dataAvailableNotification, object: nil, queue: nil) {
                 self.didReceivedData($0)
             }
         #else
@@ -185,7 +192,7 @@ class REPLWrapper: NSObject {
         }
     }
     
-    private func expect(_ patterns: [String], otherHandler: (String) -> Void = { _ in }) {
+    private func expect(_ patterns: [String], otherHandler: @escaping (String) -> Void = { _ in }) {
         let promptSemaphore = DispatchSemaphore(value: 0)
         
         let dispose = consoleOutput.observeNew {(output) -> Void in
