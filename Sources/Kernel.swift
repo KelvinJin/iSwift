@@ -19,26 +19,29 @@ enum Error: Swift.Error {
     case generalError(String)
 }
 
-enum Logger: Int {
-    case debug = 10
-    case info = 20
-    case warning = 30
-    case critical = 40
-    
-    func print(_ items: Any..., file: String = #file, function: String = #function, line: Int = #line) {
-        if rawValue >= loggerLevel {
-            Swift.print(items)
+class Logger {
+    struct Printer {
+        let rawValue: Int
+        func print(_ items: Any...) {
+            if rawValue >= loggerLevel {
+                Swift.print(items)
+            }
         }
     }
+    
+    static let debug = Printer(rawValue: 10)
+    static let info = Printer(rawValue: 20)
+    static let warning = Printer(rawValue: 30)
+    static let critical = Printer(rawValue: 40)
 }
 
 let connectionFileOption = StringOption(shortFlag: "f", longFlag: "file", required: true,
     helpMessage: "Path to the output file.")
 
 extension String {    
-    func toJSON() -> [String: AnyObject]? {
+    func toJSON() -> [String: Any]? {
         guard let data = data(using: String.Encoding.utf8),
-            let json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: AnyObject] else {
+            let json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any] else {
                 Logger.info.print("Convert to JSON failed.")
                 return nil
         }
@@ -55,7 +58,7 @@ open class Kernel {
     let context = try? Context()
     let socketQueue = DispatchQueue(label: "com.uthoft.iswift.kernel.socketqueue",  attributes: Dispatch.DispatchQueue.Attributes.concurrent)
     
-    open func start(_ arguments: [String]) {
+    open func start(_ arguments: [String]) throws {
         let cli = CommandLine(arguments: arguments)
         cli.addOptions(connectionFileOption)
         try! cli.parse()
@@ -67,10 +70,11 @@ open class Kernel {
         
         let connectionFileUrl = URL(fileURLWithPath: connectionFilePath)
         
-        guard let connectionFileData = try? Data(contentsOf: connectionFileUrl),
-        let connectionFile = (try? JSONSerialization.jsonObject(with: connectionFileData, options: [])) as? [String: AnyObject],
-        let connection = Connection.mapToObject(connectionFile) else {
-            Logger.info.print("Connection file invalid.")
+        let connectionFileData = try Data(contentsOf: connectionFileUrl)
+        let connectionFileJson = try JSONSerialization.jsonObject(with: connectionFileData, options: [])
+        
+        guard let connectionFile = connectionFileJson as? [String: Any], let connection = Connection.mapToObject(connectionFile) else {
+            Logger.info.print("Connection file invalid. \(connectionFileJson)")
             return
         }
         
@@ -86,7 +90,7 @@ open class Kernel {
         
         do {
             try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.hbPort, type: SocketType.rep) { data, socket in
-                Logger.info.print("Received heart beat data.")
+                // Logger.info.print("Received heart beat data.")
                 let _ = try? socket.send(data)
             }
             
@@ -97,11 +101,13 @@ open class Kernel {
             
             let ioPubSocket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.iopubPort, type: .pub)
             
-            NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "IOPubNotification"), object: nil, queue: OperationQueue())
+            NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "IOPubNotification"), object: nil, queue: nil)
             { (notification) -> Void in
+                Logger.debug.print("Sending iopub message...")
+                
                 if let resultMessage = notification.object as? Message {
                     do {
-                        try ioPubSocket.sendMessage(resultMessage)
+                        try Socket.sendingMessage(ioPubSocket, resultMessage)
                     } catch let e {
                         Logger.critical.print(e)
                     }
@@ -161,18 +167,23 @@ open class Kernel {
         let decodedMessageQueue = BlockingQueue<Message>()
         let processedMessageQueue = BlockingQueue<Message>()
         let encodedMessageQueue = BlockingQueue<Message>()
+        
         taskFactory.startNew {
             SocketIn.run(socket, outMessageQueue: inSocketMessageQueue)
         }
+        
         taskFactory.startNew {
             Decoder.run(connection.key, inMessageQueue: inSocketMessageQueue, outMessageQueue: decodedMessageQueue)
         }
+        
         taskFactory.startNew {
             MessageProcessor.run(decodedMessageQueue, outMessageQueue: processedMessageQueue)
         }
+        
         taskFactory.startNew {
             Encoder.run(connection.key, inMessageQueue: processedMessageQueue, outMessageQueue: encodedMessageQueue)
         }
+        
         taskFactory.startNew {
             SocketOut.run(socket, inMessageQueue: encodedMessageQueue)
         }

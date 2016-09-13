@@ -8,4 +8,4 @@
 
 import Foundation
 
-Kernel.sharedInstance.start(CommandLine.arguments)
+try! Kernel.sharedInstance.start(CommandLine.arguments)

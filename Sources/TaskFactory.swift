@@ -13,7 +13,7 @@ class TaskFactory {
     fileprivate let taskQueue: DispatchQueue
     
     init() {
-        taskQueue = DispatchQueue(label: "\(type(of: self)).\(UUID().uuidString)", attributes: .concurrent)
+        taskQueue = DispatchQueue(label: "\(type(of: self)).\(UUID().uuidString)", qos: .userInitiated, attributes: .concurrent)
     }
     
     func startNew(_ taskBlock: @escaping ()->()) {

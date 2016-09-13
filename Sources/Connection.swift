@@ -28,7 +28,7 @@ struct Connection {
     let iopubPort: Int
     let key: String
     
-    static func mapToObject(_ json: [String: AnyObject]) -> Connection? {
+    static func mapToObject(_ json: [String: Any]) -> Connection? {
         guard let controlPort = json["control_port"] as? Int,
             let shellPort = json["shell_port"] as? Int,
             let transportTypeString = json["transport"] as? String,

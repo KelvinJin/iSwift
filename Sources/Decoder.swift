@@ -14,7 +14,7 @@ class Decoder {
             // Take some message from the queue and check whether the signature matches the message.
             let message = inMessageQueue.take()
             
-            Logger.debug.print("Decoding new message...")
+            Logger.debug.print("Decoding new message...\(message.header.msgType)")
             
             if let decodedMessage = decode(key, message: message) {
                 outMessageQueue.add(decodedMessage)

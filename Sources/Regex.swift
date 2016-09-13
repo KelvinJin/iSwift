@@ -47,7 +47,7 @@ extension String {
     func matchRegex(_ pattern: Regex) -> Bool {
         let range: NSRange = NSMakeRange(0, utf8.count)
         if let regex = pattern.regex {
-            let matches: [AnyObject] = regex.matches(in: self, options: pattern.matchingOptions, range: range)
+            let matches = regex.matches(in: self, options: pattern.matchingOptions, range: range)
             return matches.count > 0
         }
         return false

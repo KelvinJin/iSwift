@@ -16,8 +16,10 @@ class SocketOut {
                 // Blockingly take message from the queue.
                 let message = inMessageQueue.take()
                 
+                Logger.debug.print("Sending out new message...\(message.header.msgType)")
+                
                 // Sequently send each part of the message.
-                try socket.sendMessage(message)
+                try Socket.sendingMessage(socket, message)
             } catch let e {
                 Logger.info.print(e)
             }
