@@ -9,7 +9,7 @@
 import Foundation
 
 class ConcurrentArray<T> {
-    private var dataSource: Array<T>
+    fileprivate var dataSource: Array<T>
     
     init() {
         self.dataSource = [T]()

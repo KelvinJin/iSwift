@@ -10,7 +10,7 @@ import Foundation
 import Cryptor
 
 extension UInt8 {
-    private static let allHexits: [Character] = "0123456789abcdef".characters.flatMap { $0 }
+    fileprivate static let allHexits: [Character] = "0123456789abcdef".characters.flatMap { $0 }
     
     func toHex() -> String {
         let nybbles = [ Int(self >> 4), Int(self & 0x0F) ]
@@ -19,9 +19,9 @@ extension UInt8 {
     }
 }
 
-public class SHA256 {
-    private let key: String
-    private var bytes: [UInt8] = []
+open class SHA256 {
+    fileprivate let key: String
+    fileprivate var bytes: [UInt8] = []
     
     init(key: String) {
         self.key = key

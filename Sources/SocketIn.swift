@@ -53,7 +53,7 @@ class SocketIn {
         }
     }
     
-    static private func constructMessage(_ messageBlobs: [String]) throws -> Message {
+    static fileprivate func constructMessage(_ messageBlobs: [String]) throws -> Message {
         // Make sure there are enough blobs.
         guard messageBlobs.count >= 5 else {
             throw Error.socketError("message blobs are not enough.")
@@ -102,7 +102,7 @@ class SocketIn {
         return Message(signature: signature, header: header, parentHeader: parentHeader, metadata: metadata, content: content, extraBlobs: extraBlobs)
     }
     
-    static private func parse<T>(_ str: String, converter: (([String: Any]) -> T?)) throws -> T {
+    static fileprivate func parse<T>(_ str: String, converter: (([String: Any]) -> T?)) throws -> T {
         guard let json = str.toJSON() else {
             print(str)
             throw Error.socketError("Parse \(str) to JSON failed.")

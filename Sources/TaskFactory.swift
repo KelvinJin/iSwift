@@ -10,7 +10,7 @@ import Foundation
 import Dispatch
 
 class TaskFactory {
-    private let taskQueue: DispatchQueue
+    fileprivate let taskQueue: DispatchQueue
     
     init() {
         taskQueue = DispatchQueue(label: "\(type(of: self)).\(UUID().uuidString)", attributes: .concurrent)

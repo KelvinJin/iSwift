@@ -9,7 +9,7 @@
 import Foundation
 
 class Stack<T> {
-    private var dataSource: [T]
+    fileprivate var dataSource: [T]
     
     var isEmpty: Bool {
         return dataSource.isEmpty

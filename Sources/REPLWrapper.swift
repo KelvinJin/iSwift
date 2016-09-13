@@ -30,21 +30,21 @@ class Observable<T> {
         
     }
     
-    func observeNew(block: (T) -> Void) -> Disposable {
+    func observeNew(_ block: (T) -> Void) -> Disposable {
         return Disposable()
     }
 }
 
 class REPLWrapper: NSObject {
-    private let command: String
-    private var prompt: String
-    private var continuePrompt: String
-    private var communicator: FileHandle!
-    private var lastOutput: String = ""
-    private var consoleOutput = Observable<String>("")
-    private var currentTask: Task!
+    fileprivate let command: String
+    fileprivate var prompt: String
+    fileprivate var continuePrompt: String
+    fileprivate var communicator: FileHandle!
+    fileprivate var lastOutput: String = ""
+    fileprivate var consoleOutput = Observable<String>("")
+    fileprivate var currentTask: Task!
     
-    private let runModes = [RunLoopMode.defaultRunLoopMode]
+    fileprivate let runModes = [RunLoopMode.defaultRunLoopMode]
     
     init(command: String, prompt: String, continuePrompt: String) throws {
         self.command = command
@@ -129,7 +129,7 @@ class REPLWrapper: NSObject {
         }
     }
     
-    private func launchTaskInBackground() throws {
+    fileprivate func launchTaskInBackground() throws {
         DispatchQueue.global(qos: .default).async { [unowned self] in
             do {
                 try self.launchTask()
@@ -141,7 +141,7 @@ class REPLWrapper: NSObject {
         expect([prompt])
     }
     
-    private func launchTask() throws {
+    fileprivate func launchTask() throws {
         currentTask = Task()
         currentTask.launchPath = command
         

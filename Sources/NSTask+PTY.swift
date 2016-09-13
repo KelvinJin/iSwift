@@ -12,7 +12,7 @@ import ObjectiveCMap
 #if os(Linux)
     
 #else
-    typealias Task = Process
+    typealias Task = CommandLine
 #endif
 
 extension Task {
@@ -43,7 +43,7 @@ extension Task {
         return masterHandle
     }
     
-    private func turnOffEcho(_ fd: Int32) throws {
+    fileprivate func turnOffEcho(_ fd: Int32) throws {
         // Code from http://man7.org/tlpi/code/online/book/tty/no_echo.c.html
         
         /* Retrieve current terminal settings, turn echoing off */

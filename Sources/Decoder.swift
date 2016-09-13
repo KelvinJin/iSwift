@@ -22,7 +22,7 @@ class Decoder {
         }
     }
     
-    static private func decode(_ key: String, message: Message) -> Message? {
+    static fileprivate func decode(_ key: String, message: Message) -> Message? {
 //        return message.signature == message.toSHA256(key) ? message : nil
         return message
     }

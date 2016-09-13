@@ -55,15 +55,15 @@ extension String {
     }
 }
 
-public class Kernel {
-    public static let sharedInstance = Kernel()
+open class Kernel {
+    open static let sharedInstance = Kernel()
     
-    private var totalExecutionCount = 0
+    fileprivate var totalExecutionCount = 0
     
     let context = try? Context()
     let socketQueue = DispatchQueue(label: "com.uthoft.iswift.kernel.socketqueue",  attributes: Dispatch.DispatchQueue.Attributes.concurrent)
     
-    public func start(_ arguments: [String]) {
+    open func start(_ arguments: [String]) {
         let cli = CommandLine(arguments: arguments)
         cli.addOptions(connectionFileOption)
         try! cli.parse()
@@ -86,24 +86,24 @@ public class Kernel {
         listen(connection)
     }
     
-    private func listen(_ connection: Connection) {
+    fileprivate func listen(_ connection: Connection) {
         guard let context = context else {
             Logger.info.print("Context is not initialised.")
             return
         }
         
         do {
-            try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.hbPort, type: SocketType.Rep) { data, socket in
+            try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.hbPort, type: SocketType.rep) { data, socket in
                 Logger.info.print("Received heart beat data.")
                 let _ = try? socket.send(data)
             }
             
-            try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.controlPort, type: SocketType.Router) { data, socket in
+            try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.controlPort, type: SocketType.router) { data, socket in
                 Logger.info.print("Received control data.")
                 
             }
             
-            let ioPubSocket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.iopubPort, type: .Pub)
+            let ioPubSocket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.iopubPort, type: .pub)
             
             NotificationCenter.default.addObserver(forName: Notification.Name(rawValue: "IOPubNotification"), object: nil, queue: OperationQueue(), using: { (notification) -> Void in
                 if let resultMessage = notification.object as? Message {
@@ -117,7 +117,7 @@ public class Kernel {
                 }
             })
             
-            try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.stdinPort, type: SocketType.Router) { data, socket in
+            try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.stdinPort, type: SocketType.router) { data, socket in
                 Logger.info.print("Received stdin data.")
                 
             }
@@ -163,7 +163,7 @@ public class Kernel {
     
     private func startShell(_ context: Context, connection: Connection) throws {
         let taskFactory = TaskFactory()
-        let socket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.shellPort, type: .Router)
+        let socket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.shellPort, type: .router)
         let inSocketMessageQueue = BlockingQueue<Message>()
         let decodedMessageQueue = BlockingQueue<Message>()
         let processedMessageQueue = BlockingQueue<Message>()

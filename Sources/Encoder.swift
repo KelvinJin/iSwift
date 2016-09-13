@@ -18,7 +18,7 @@ class Encoder {
         }
     }
     
-    static private func encode(_ key: String, message: inout Message) -> Message {
+    static fileprivate func encode(_ key: String, message: inout Message) -> Message {
         message.signature = message.toSHA256(key)
         return message
     }

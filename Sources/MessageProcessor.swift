@@ -19,7 +19,7 @@ class MessageProcessor {
     
     static var session: String = ""
     
-    private static let replWrapper = try! REPLWrapper(command: "/usr/bin/swift", prompt: "^\\s*\\d+>\\s*$", continuePrompt: "^\\s*\\d+\\.\\s*$")
+    fileprivate static let replWrapper = try! REPLWrapper(command: "/usr/bin/swift", prompt: "^\\s*\\d+>\\s*$", continuePrompt: "^\\s*\\d+\\.\\s*$")
     
     static func run(_ inMessageQueue: BlockingQueue<Message>, outMessageQueue: BlockingQueue<Message>) {
         while true {
@@ -69,7 +69,7 @@ class MessageProcessor {
         }
     }
     
-    private static func execute(_ cmd: String, executionCount: Int, parentHeader: Header, metadata: [String: AnyObject]) {
+    fileprivate static func execute(_ cmd: String, executionCount: Int, parentHeader: Header, metadata: [String: AnyObject]) {
         if session.isEmpty {
             session = parentHeader.session
             
@@ -87,7 +87,7 @@ class MessageProcessor {
         sendIOPubMessage(.ExecuteResult, content: content, parentHeader: parentHeader)
     }
     
-    private static func sendIOPubMessage(_ type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: AnyObject] = [:]) {
+    fileprivate static func sendIOPubMessage(_ type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: AnyObject] = [:]) {
         DispatchQueue.global(qos: .default).async { () -> Void in
             let header = Header(session: session, msgType: type)
             let message = Message(header: header, parentHeader: parentHeader, metadata: metadata, content: content)

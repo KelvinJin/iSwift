@@ -12,8 +12,8 @@ import CoreFoundation
 
 // By default, this will be a FIFO queue.
 class BlockingQueue<Element> {
-    private var dataSource: ConcurrentArray<Element>
-    private let dataSemaphore: DispatchSemaphore
+    fileprivate var dataSource: ConcurrentArray<Element>
+    fileprivate let dataSemaphore: DispatchSemaphore
     
     init() {
         dataSource = ConcurrentArray<Element>()
