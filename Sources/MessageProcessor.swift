@@ -22,7 +22,7 @@ class MessageProcessor {
     #if os(Linux)
     
     // FIXME, need to find a better way to specify the path of the swift command.
-    fileprivate static let replWrapper = try! REPLWrapper(command: "/root/swift-DEVELOPMENT-SNAPSHOT-2016-09-11-a-ubuntu14.04/usr/bin/swift", prompt: "^\\s*\\d+>\\s*$", continuePrompt: "^\\s*\\d+\\.\\s*$")
+    fileprivate static let replWrapper = try! REPLWrapper(command: "/root/swift-DEVELOPMENT-SNAPSHOT-2017-01-24-a-ubuntu14.04/usr/bin/swift", prompt: "^\\s*\\d+>\\s*$", continuePrompt: "^\\s*\\d+\\.\\s*$")
     
     #else
     

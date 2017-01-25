@@ -16,13 +16,19 @@ enum REPLState {
 }
 
 class Disposable {
+    private let disposeBlock: () -> Void
+    
+    init(disposeBlock: @escaping () -> Void) {
+        self.disposeBlock = disposeBlock
+    }
+    
     func dispose() {
-        
+        disposeBlock()
     }
 }
 
 class Observable<T> {
-    private var observers: [(T) -> Void] = []
+    private var observers: [String: (T) -> Void] = [:]
     private var curValue: T
     
     init(_ initValue: T) {
@@ -34,7 +40,7 @@ class Observable<T> {
         
         Logger.debug.print("Next observale...")
         
-        for observer in observers {
+        for observer in observers.values {
             observer(curValue)
         }
     }
@@ -42,8 +48,11 @@ class Observable<T> {
     func observeNew(_ block: @escaping (T) -> Void) -> Disposable {
         Logger.debug.print("observale New...")
         
-        observers.append(block)
-        return Disposable()
+        let id = UUID().uuidString
+        observers[id] = block
+        return Disposable { [weak self] in
+            self?.observers.removeValue(forKey: id)
+        }
     }
 }
 
@@ -66,6 +75,9 @@ class REPLWrapper: NSObject {
         
         try launchTaskInBackground()
     }
+    
+    
+    private var sameLineOutput = ""
     
     func didReceivedData(_ notification: Notification) {
         let data = currentTask.availableData
@@ -96,11 +108,16 @@ class REPLWrapper: NSObject {
             
             Logger.debug.print("Received data line...\(line)")
             
-            // Don't remember to add a new line to compensate the loss of the non last line.
+            // Append this line to the same line output.
+            let l = sameLineOutput + line
+            
+            // Don't forget to add a new line to compensate the loss of the non last line.
             if index == lines.count - 1 && !dataStr.hasSuffix("\n") {
-                consoleOutput.next(line)
+                sameLineOutput = line
+                consoleOutput.next(l)
             } else {
-                consoleOutput.next("\(line)\n")
+                sameLineOutput = ""
+                consoleOutput.next("\(l)\n")
             }
         }
         
@@ -210,10 +227,15 @@ class REPLWrapper: NSObject {
             Logger.debug.print("Console output \(output)")
             
             for pattern in patterns where output.match(pattern) {
+                self.sameLineOutput = ""
                 promptSemaphore.signal()
                 return
             }
-            otherHandler(output)
+            
+            // Only when we get a full line we'll send it back.
+            if output.hasSuffix("\n") {
+                otherHandler(output)
+            }
         }
         
         promptSemaphore.wait(timeout: DispatchTime.distantFuture)

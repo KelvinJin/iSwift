@@ -8,11 +8,10 @@
 
 import Foundation
 import ZeroMQ
-import CommandLine
-import C7
+import CommandLineKit
 import Dispatch
 
-private let loggerLevel = 30
+private let loggerLevel = 10
 
 enum Error: Swift.Error {
     case socketError(String)
@@ -22,17 +21,18 @@ enum Error: Swift.Error {
 class Logger {
     struct Printer {
         let rawValue: Int
+        let tag: String
         func print(_ items: Any...) {
             if rawValue >= loggerLevel {
-                Swift.print(items)
+                Swift.print(tag, items, separator: " -- ")
             }
         }
     }
     
-    static let debug = Printer(rawValue: 10)
-    static let info = Printer(rawValue: 20)
-    static let warning = Printer(rawValue: 30)
-    static let critical = Printer(rawValue: 40)
+    static let debug = Printer(rawValue: 10, tag: "debug")
+    static let info = Printer(rawValue: 20, tag: "info")
+    static let warning = Printer(rawValue: 30, tag: "warning")
+    static let critical = Printer(rawValue: 40, tag: "critical")
 }
 
 let connectionFileOption = StringOption(shortFlag: "f", longFlag: "file", required: true,
@@ -95,8 +95,7 @@ open class Kernel {
             }
             
             try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.controlPort, type: SocketType.router) { data, socket in
-                Logger.info.print("Received control data.")
-                
+                Logger.info.print("Received control data. \(String(data: data, encoding: .utf8) ?? "Invalid String")")
             }
             
             let ioPubSocket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.iopubPort, type: .pub)
@@ -118,38 +117,39 @@ open class Kernel {
             
             try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.stdinPort, type: SocketType.router) { data, socket in
                 Logger.info.print("Received stdin data.")
-                
             }
             
-            socketQueue.async {
+            socketQueue.async { [unowned self] in
                 do {
-                    try self.startShell(context, connection: connection)
+                    // try self.createMessageSocket(context, transport: connection.transport, ip: connection.ip, port: connection.iopubPort, key: connection.key, type: .pub)
+                    try self.createMessageSocket(context, transport: connection.transport, ip: connection.ip, port: connection.shellPort, key: connection.key, type: .router)
+                    Logger.info.print("Shell router is shutting down...")
                 } catch let e {
-                    print(e)
+                    Logger.critical.print(e)
                 }
             }
             
         } catch let e {
-            Logger.info.print("Socket creation error: \(e)")
+            Logger.critical.print("Socket creation error: \(e)")
         }
         
         socketQueue.sync(flags: .barrier, execute: {
-            Logger.info.print("Listening completed...")
+            Logger.critical.print("Listening completed...")
         }) 
     }
     
-    private func createSocket(_ context: Context, transport: TransportType, ip: String, port: Int, type: SocketType, dataHandler: @escaping (C7.Data, Socket) -> Void) throws {
+    private func createSocket(_ context: Context, transport: TransportType, ip: String, port: Int, type: SocketType, dataHandler: @escaping (Data, Socket) -> Void) throws {
         // Create a heart beat connection that will reply anything it receives.
         let socket = try context.socket(type)
         try socket.bind("\(transport.rawValue)://\(ip):\(port)")
         
         socketQueue.async {
             do {
-                while let data = try socket.receive(), data.count > 0 {
+                while let data: Data = try socket.receive(), data.count > 0 {
                     dataHandler(data, socket)
                 }
             } catch let e {
-                Logger.info.print("Socket exception...\(e)")
+                Logger.critical.print("Socket exception...\(e)")
             }
         }
     }
@@ -160,9 +160,9 @@ open class Kernel {
         return socket
     }
     
-    private func startShell(_ context: Context, connection: Connection) throws {
+    private func createMessageSocket(_ context: Context, transport: TransportType, ip: String, port: Int, key: String, type: SocketType) throws {
         let taskFactory = TaskFactory()
-        let socket = try createSocket(context, transport: connection.transport, ip: connection.ip, port: connection.shellPort, type: .router)
+        let socket = try createSocket(context, transport: transport, ip: ip, port: port, type: type)
         let inSocketMessageQueue = BlockingQueue<Message>()
         let decodedMessageQueue = BlockingQueue<Message>()
         let processedMessageQueue = BlockingQueue<Message>()
@@ -173,7 +173,7 @@ open class Kernel {
         }
         
         taskFactory.startNew {
-            Decoder.run(connection.key, inMessageQueue: inSocketMessageQueue, outMessageQueue: decodedMessageQueue)
+            Decoder.run(key, inMessageQueue: inSocketMessageQueue, outMessageQueue: decodedMessageQueue)
         }
         
         taskFactory.startNew {
@@ -181,7 +181,7 @@ open class Kernel {
         }
         
         taskFactory.startNew {
-            Encoder.run(connection.key, inMessageQueue: processedMessageQueue, outMessageQueue: encodedMessageQueue)
+            Encoder.run(key, inMessageQueue: processedMessageQueue, outMessageQueue: encodedMessageQueue)
         }
         
         taskFactory.startNew {

@@ -20,14 +20,14 @@ class SocketIn {
         
         while true {
             do {
-                if let recv = try socket.receiveString() {
+                if let recv: String = try socket.receive() {
                     Logger.debug.print("Get socket string: \(recv)")
                     if recv == Message.Delimiter {
                         // It seems to be a new message coming.
                         
                         // FIXME: Find a way to make this read extra blobs.
                         for _ in 0..<5 {
-                            if let data = try socket.receiveString() {
+                            if let data: String = try socket.receive() {
                                 Logger.debug.print("Get socket string: \(data)")
                                 messageBlobs.append(data)
                             }

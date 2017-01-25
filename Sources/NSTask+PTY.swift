@@ -9,11 +9,7 @@
 import Foundation
 import ObjectiveCMap
 
-#if os(Linux)
-    
-#else
-    typealias Task = Process
-#endif
+typealias Task = Process
 
 extension Task {
     func masterSideOfPTY(_ echoOn: Bool = false) throws -> FileHandle {

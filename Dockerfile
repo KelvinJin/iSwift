@@ -75,12 +75,13 @@ RUN ln -s /usr/bin/clang-3.8 /usr/bin/clang \
 
 RUN apt-get install binutils-gold
 
-ENV SWIFT_SNAPSHOT swift-DEVELOPMENT-SNAPSHOT-2016-09-11-a
+ENV SWIFT_SNAPSHOT swift-DEVELOPMENT-SNAPSHOT-2017-01-24-a
 ENV UBUNTU_VERSION ubuntu14.04
 ENV UBUNTU_VERSION_NO_DOTS ubuntu1404
+ENV SWIFT_BRANCH development
 
 # Install Swift compiler
-RUN wget https://swift.org/builds/development/$UBUNTU_VERSION_NO_DOTS/$SWIFT_SNAPSHOT/$SWIFT_SNAPSHOT-$UBUNTU_VERSION.tar.gz \
+RUN wget https://swift.org/builds/$SWIFT_BRANCH/$UBUNTU_VERSION_NO_DOTS/$SWIFT_SNAPSHOT/$SWIFT_SNAPSHOT-$UBUNTU_VERSION.tar.gz \
   && tar xzvf $SWIFT_SNAPSHOT-$UBUNTU_VERSION.tar.gz \
   && rm $SWIFT_SNAPSHOT-$UBUNTU_VERSION.tar.gz
 ENV PATH $WORK_DIR/$SWIFT_SNAPSHOT-$UBUNTU_VERSION/usr/bin:$PATH
@@ -91,6 +92,8 @@ RUN swiftc -h
 
 #Install Pip3
 RUN apt-get install -y python3-pip
+
+RUN pip3 install --upgrade pip
 
 # Install Jupyter
 RUN pip3 install jupyter
@@ -106,4 +109,4 @@ EXPOSE 8888
 
 RUN mkdir notebooks
 
-CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--Session.key=b''", "--notebook-dir=notebooks"]
+CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--NotebookApp.token=", "--ip=0.0.0.0", "--Session.key=b''", "--notebook-dir=notebooks"]

@@ -8,6 +8,7 @@
 
 import Foundation
 import Dispatch
+import CoreFoundation
 
 private let MAX_DATA_SIZE = 1024
 
@@ -67,6 +68,7 @@ class Shell {
         
         posix(posix_spawn_file_actions_adddup2(&fileActions, fdSlave, STDIN_FILENO))
         posix(posix_spawn_file_actions_adddup2(&fileActions, fdSlave, STDOUT_FILENO))
+        posix(posix_spawn_file_actions_adddup2(&fileActions, fdSlave, STDERR_FILENO))
         
         let args = [launchPath]
         
@@ -101,6 +103,7 @@ class Shell {
     }
     
     func waitForDataInBackgroundAndNotify(forModes modes: [RunLoopMode]) {
+        assert(!modes.isEmpty, "empty modes are not allowed.")
         
         DispatchQueue.global().async {
             
@@ -127,10 +130,30 @@ class Shell {
             
             self.availableData = finalData
             
-            // Got enough info, let's notify.
-            NotificationCenter.default.post(name: Shell.dataAvailableNotification, object: self, userInfo: nil)
+            if #available(OSX 10.12, *) {
+                RunLoop.current.perform(inModes: modes, block: { [weak self] in
+                    self?.notifyDataAvailable()
+                })
+            } else {
+                
+                #if os(Linux)
+                RunLoop.current.perform(inModes: modes, block: { [weak self] in
+                    self?.notifyDataAvailable()
+                })
+                #else
+                RunLoop.current.perform(#selector(Shell.notifyDataAvailable), target: self, argument: nil, order: Int.max, modes: modes)
+                #endif
+            }
             
+            RunLoop.current.run()
         }
+    }
+    
+    @objc private func notifyDataAvailable() {
+        // Got enough info, let's notify.
+        NotificationCenter.default.post(name: Shell.dataAvailableNotification, object: self, userInfo: nil)
+        
+        CFRunLoopStop(RunLoop.current.getCFRunLoop())
     }
     
     func writeWith(_ data: Data) {

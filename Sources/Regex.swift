@@ -9,7 +9,7 @@
 import Foundation
 
 #if os(Linux)
-    typealias NSRegularExpression = RegularExpression
+    // typealias NSRegularExpression = NSRegularExpression
     typealias RegularExpressionMatchingOptions = NSMatchingOptions
 #else
     typealias RegularExpressionMatchingOptions = NSRegularExpression.MatchingOptions
