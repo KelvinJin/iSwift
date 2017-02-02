@@ -17,5 +17,5 @@ jupyter-kernelspec install swift
 
 To run jupyter:
 ```
-jupyter notebook --Session.key=b''
+jupyter notebook --Session.key="b''"
 ```

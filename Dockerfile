@@ -103,7 +103,7 @@ WORKDIR ${WORK_DIR}/iSwift
 
 RUN swift package update
 RUN swift build -Xcc -IIncludes
-RUN jupyter kernelspec install swift3
+RUN jupyter kernelspec install SwiftyKernel
 
 EXPOSE 8888
 

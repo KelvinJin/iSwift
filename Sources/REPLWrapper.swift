@@ -141,8 +141,6 @@ class REPLWrapper: NSObject {
     func didReceivedData(_ notification: Notification) {
         let data = currentTask.availableData
         
-        Logger.debug.print("Get notification...")
-        
         guard let dataStr = String(data: data, encoding: .utf8) else { return }
         
         Logger.debug.print("Received data...\(dataStr)")

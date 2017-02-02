@@ -122,11 +122,7 @@ class Shell {
     }
     
     func writeWith(_ data: Data) {
-        Printer.print("Writing to console...AAAAAAA")
-        
         checkLaunched()
-        
-        Printer.print("Writing to console...")
         
         let size = data.count
         let dataPtr: UnsafeMutablePointer<UInt8> = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
