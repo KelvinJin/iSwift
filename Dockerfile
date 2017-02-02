@@ -58,7 +58,7 @@ RUN cd /tmp/ \
     && make \
     && make install
 
-RUN apt-get install openssl libssl-dev
+RUN apt-get install -y openssl libssl-dev
 
 RUN apt-get install systemtap-sdt-dev
 
