@@ -8,6 +8,7 @@
 
 import Foundation
 import Dispatch
+import Interstellar
 
 enum REPLState {
     case prompt
@@ -15,53 +16,12 @@ enum REPLState {
     case output
 }
 
-class Disposable {
-    private let disposeBlock: () -> Void
-    
-    init(disposeBlock: @escaping () -> Void) {
-        self.disposeBlock = disposeBlock
-    }
-    
-    func dispose() {
-        disposeBlock()
-    }
-}
-
-class Observable<T> {
-    private var observers: [String: (T) -> Void] = [:]
-    private var curValue: T
-    
-    init(_ initValue: T) {
-        curValue = initValue
-    }
-    
-    func next(_ nextValue: T) {
-        curValue = nextValue
-        
-        Logger.debug.print("Next observale...")
-        
-        for observer in observers.values {
-            observer(curValue)
-        }
-    }
-    
-    func observeNew(_ block: @escaping (T) -> Void) -> Disposable {
-        Logger.debug.print("observale New...")
-        
-        let id = UUID().uuidString
-        observers[id] = block
-        return Disposable { [weak self] in
-            self?.observers.removeValue(forKey: id)
-        }
-    }
-}
-
 class REPLWrapper: NSObject {
     fileprivate let command: String
     fileprivate var prompt: String
     fileprivate var continuePrompt: String
     fileprivate var lastOutput: String = ""
-    fileprivate var consoleOutput = Observable<String>("")
+    fileprivate var consoleOutput = Observable<String>(options: .NoInitialValue)
     fileprivate var currentTask: Shell!
     
     fileprivate let runModes = [RunLoopMode.defaultRunLoopMode]
@@ -79,52 +39,8 @@ class REPLWrapper: NSObject {
     
     private var sameLineOutput = ""
     
-    func didReceivedData(_ notification: Notification) {
-        let data = currentTask.availableData
-        
-        Logger.debug.print("Get notification...")
-        
-        guard let dataStr = String(data: data, encoding: .utf8) else { return }
-        
-        Logger.debug.print("Received data...\(dataStr)")
-        
-        // For every data the console gives, it can be a new prompt or a continue prompt or an actual output.
-        // We'll need to deal with it accordingly.
-        if dataStr.match(prompt, options: [.anchorsMatchLines]) {
-            // It's a new prompt.
-        } else if dataStr.match(continuePrompt, options: [.anchorsMatchLines]) {
-            // It's a continue prompt. It means the console is expecting more data.
-        } else {
-            // It's a raw output.
-        }
-        
-        // Sometimes, the output will contain multiline string. We can't deal with them once. We
-        // need to separater them, so that the prompt is dealt in time and the raw output will be captured.
-        // FIXME: On Linux, dataStr.components(separatedBy: CharacterSet.newlines) will fail when dataStr is "\r\n"
-        let lines = dataStr.components(separatedBy: "\r\n")
-        
-        for (index, line) in lines.enumerated() {
-            guard !line.isEmpty else { continue }
-            
-            Logger.debug.print("Received data line...\(line)")
-            
-            // Append this line to the same line output.
-            let l = sameLineOutput + line
-            
-            // Don't forget to add a new line to compensate the loss of the non last line.
-            if index == lines.count - 1 && !dataStr.hasSuffix("\n") {
-                sameLineOutput = line
-                consoleOutput.next(l)
-            } else {
-                sameLineOutput = ""
-                consoleOutput.next("\(l)\n")
-            }
-        }
-        
-        currentTask.waitForDataInBackgroundAndNotify(forModes: runModes)
-    }
-    
     func taskDidTerminated(_ notification: Notification) {
+        Logger.debug.print("REPL has been terminated.")
     }
     
     // The command might be a multiline command.
@@ -220,21 +136,47 @@ class REPLWrapper: NSObject {
         }
     }
     
+    // MARK: - Response handle.
+    
+    func didReceivedData(_ notification: Notification) {
+        let data = currentTask.availableData
+        
+        Logger.debug.print("Get notification...")
+        
+        guard let dataStr = String(data: data, encoding: .utf8) else { return }
+        
+        Logger.debug.print("Received data...\(dataStr)")
+        
+        // For every data the console gives, it can be a new prompt or a continue prompt or an actual output.
+        // We'll need to deal with it accordingly.
+        if dataStr.match(prompt, options: [.anchorsMatchLines]) {
+            // It's a new prompt.
+        } else if dataStr.match(continuePrompt, options: [.anchorsMatchLines]) {
+            // It's a continue prompt. It means the console is expecting more data.
+        } else {
+            // It's a raw output.
+        }
+        
+        sameLineOutput += dataStr
+        consoleOutput.update(sameLineOutput)
+        
+        currentTask.waitForDataInBackgroundAndNotify(forModes: runModes)
+    }
+    
     private func expect(_ patterns: [String], otherHandler: @escaping (String) -> Void = { _ in }) {
         let promptSemaphore = DispatchSemaphore(value: 0)
         
-        let dispose = consoleOutput.observeNew {(output) -> Void in
+        let dispose = consoleOutput.subscribe { output in
             Logger.debug.print("Console output \(output)")
             
             for pattern in patterns where output.match(pattern) {
                 self.sameLineOutput = ""
+                
+                // Remove the propmt from the output and return it.
+                otherHandler(output.replace(pattern, template: ""))
+                
                 promptSemaphore.signal()
                 return
-            }
-            
-            // Only when we get a full line we'll send it back.
-            if output.hasSuffix("\n") {
-                otherHandler(output)
             }
         }
         
@@ -242,6 +184,6 @@ class REPLWrapper: NSObject {
         
         Logger.debug.print("Expect passed...")
         
-        dispose.dispose()
+        consoleOutput.unsubscribe(dispose)
     }
 }

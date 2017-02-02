@@ -7,5 +7,6 @@ let package = Package(
         .Package(url: "https://github.com/IBM-Swift/BlueCryptor.git", majorVersion: 0),
         .Package(url: "https://github.com/DanToml/Jay.git", majorVersion: 1),
         .Package(url: "https://github.com/jatoben/CommandLine", Version(3, 0, 0, prereleaseIdentifiers: ["pre"])),
+        .Package(url: "https://github.com/jensravens/interstellar.git", majorVersion: 2),
     ]
 )

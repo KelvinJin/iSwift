@@ -30,7 +30,7 @@ struct Regex {
     
     var regex: NSRegularExpression?
     
-    init(pattern: String, expressionOptions: NSRegularExpression.Options = NSRegularExpression.Options(), matchingOptions: RegularExpressionMatchingOptions = RegularExpressionMatchingOptions()) {
+    init(pattern: String, expressionOptions: NSRegularExpression.Options = [.anchorsMatchLines], matchingOptions: RegularExpressionMatchingOptions = RegularExpressionMatchingOptions()) {
         self.pattern = pattern
         self.expressionOptions = expressionOptions
         self.matchingOptions = matchingOptions
