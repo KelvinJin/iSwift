@@ -9,6 +9,15 @@
 import Foundation
 import ZeroMQ
 
+extension Socket {
+    // Enable the ability to receive messages that are very long. Such as those over 1024 bytes.
+    func receiveMessageString(_ mode: ReceiveMode = []) throws -> String? {
+        guard let message = try receiveMessage() else { return nil }
+        let data = Data(bytes: message.data, count: message.size)
+        return String(data: data, encoding: .utf8)
+    }
+}
+
 class SocketIn {
     
     static func run(_ socket: Socket, outMessageQueue: BlockingQueue<Message>) {
@@ -20,14 +29,14 @@ class SocketIn {
         
         while true {
             do {
-                if let recv: String = try socket.receive() {
+                if let recv: String = try socket.receiveMessageString() {
                     Logger.debug.print("Get socket string: \(recv)")
                     if recv == Message.Delimiter {
                         // It seems to be a new message coming.
                         
                         // FIXME: Find a way to make this read extra blobs.
                         for _ in 0..<5 {
-                            if let data: String = try socket.receive() {
+                            if let data: String = try socket.receiveMessageString() {
                                 Logger.debug.print("Get socket string: \(data)")
                                 messageBlobs.append(data)
                             }

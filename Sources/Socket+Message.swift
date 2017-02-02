@@ -29,7 +29,9 @@ extension Socket {
                             message.header.toJSONString(), message.parentHeader?.toJSONString() ?? "{}", "{}",
                             message.content.toJSONString()]
         for (index, dataStr) in messageBlobs.enumerated() {
-            try socket.send(dataStr, mode: index == messageBlobs.count - 1 ? .DontWait : .SendMore)
+            let sentOut = try socket.send(dataStr, mode: index == messageBlobs.count - 1 ? [] : .SendMore)
+            
+            print("\(dataStr) has \(sentOut ? "" : "not") been sent.", sentOut)
         }
     }
 }
