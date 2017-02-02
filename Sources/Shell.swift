@@ -26,6 +26,9 @@ class Shell {
     static let dataAvailableNotification = NSNotification.Name(rawValue: "TASK.DATA.AVAILABLE")
     static let didTerminateNotification = NSNotification.Name(rawValue: "TASK.DID.TERMINATE")
     
+    
+    private let dataReadSerialQueue = DispatchQueue(label: "iSwiftCore.Shell.DataRead")
+    
     var launchPath: String = ""
     var echoOn: Bool = false
     var availableData = Data()
@@ -105,47 +108,9 @@ class Shell {
     func waitForDataInBackgroundAndNotify(forModes modes: [RunLoopMode]) {
         assert(!modes.isEmpty, "empty modes are not allowed.")
         
-        DispatchQueue.global().async {
-            
-            Printer.print("Waiting for data...")
-            
-            let data = UnsafeMutableRawPointer.allocate(bytes: MAX_DATA_SIZE, alignedTo: MemoryLayout<UInt8>.alignment)
-            var actualSize = read(self.fdMaster, data, MAX_DATA_SIZE)
-            var finalData = Data()
-            while actualSize >= 0 {
-                if actualSize == 0 {
-                    Printer.print("End of the file?!")
-                    break
-                }
-                
-                finalData.append(Data(bytesNoCopy: data, count: actualSize, deallocator: .none))
-                
-                if actualSize < MAX_DATA_SIZE {
-                    // Seems enough.
-                    break
-                }
-                
-                actualSize = read(self.fdMaster, data, MAX_DATA_SIZE)
-            }
-            
-            self.availableData = finalData
-            
-            if #available(OSX 10.12, *) {
-                RunLoop.current.perform(inModes: modes, block: { [weak self] in
-                    self?.notifyDataAvailable()
-                })
-            } else {
-                
-                #if os(Linux)
-                RunLoop.current.perform(inModes: modes, block: { [weak self] in
-                    self?.notifyDataAvailable()
-                })
-                #else
-                RunLoop.current.perform(#selector(Shell.notifyDataAvailable), target: self, argument: nil, order: Int.max, modes: modes)
-                #endif
-            }
-            
-            RunLoop.current.run()
+        // There should be only one process reading from the pty at any time.
+        dataReadSerialQueue.async {
+            self._waitForDataInBackgroundAndNotify(forModes: modes)
         }
     }
     
@@ -209,5 +174,48 @@ class Shell {
         if (tcsetattr(fd, TCSAFLUSH, &tp) == -1) {
             throw TaskError.generalError("tcsetattr error.")
         }
+    }
+    
+    // There should only be one method executing at anytime.
+    private func _waitForDataInBackgroundAndNotify(forModes modes: [RunLoopMode]) {
+        Printer.print("Waiting for data...")
+        
+        let data = UnsafeMutableRawPointer.allocate(bytes: MAX_DATA_SIZE, alignedTo: MemoryLayout<UInt8>.alignment)
+        var actualSize = read(self.fdMaster, data, MAX_DATA_SIZE)
+        var finalData = Data()
+        while actualSize >= 0 {
+            if actualSize == 0 {
+                Printer.print("End of the file?!")
+                break
+            }
+            
+            finalData.append(Data(bytesNoCopy: data, count: actualSize, deallocator: .none))
+            
+            if actualSize < MAX_DATA_SIZE {
+                // Seems enough.
+                break
+            }
+            
+            actualSize = read(self.fdMaster, data, MAX_DATA_SIZE)
+        }
+        
+        self.availableData = finalData
+        
+        if #available(OSX 10.12, *) {
+            RunLoop.current.perform(inModes: modes, block: { [weak self] in
+                self?.notifyDataAvailable()
+            })
+        } else {
+            
+            #if os(Linux)
+                RunLoop.current.perform(inModes: modes, block: { [weak self] in
+                    self?.notifyDataAvailable()
+                })
+            #else
+                RunLoop.current.perform(#selector(Shell.notifyDataAvailable), target: self, argument: nil, order: Int.max, modes: modes)
+            #endif
+        }
+        
+        RunLoop.current.run()
     }
 }
