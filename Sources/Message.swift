@@ -31,7 +31,11 @@ enum MessageType: String {
 class Message {
     static let Delimiter = "<IDS|MSG>"
     
-    var signature: String
+    lazy var idents: [Data] = {
+        return [self.header.session.data(using: .utf8)].flatMap { $0 }
+    }()
+    
+    var signature: Data
     
     /// The message header contains a pair of unique identifiers for the
     /// originating session and the actual message id, in addition to the
@@ -52,9 +56,9 @@ class Message {
     /// depends on the message type.
     let content: Contentable
     
-    let extraBlobs: [String]
+    let extraBlobs: [Data]
     
-    init(signature: String = "", header: Header, parentHeader: Header?, metadata: [String: Any], content: Contentable, extraBlobs: [String] = []) {
+    init(signature: Data = Data(), header: Header, parentHeader: Header?, metadata: [String: Any], content: Contentable, extraBlobs: [Data] = []) {
         self.signature = signature
         self.header = header
         self.parentHeader = parentHeader
@@ -63,7 +67,7 @@ class Message {
         self.extraBlobs = extraBlobs
     }
     
-    func toSHA256(_ key: String) -> String {
+    func toSHA256(_ key: String) -> Data {
         let digestor = SHA256(key: key)
         
         let emptyDict: [String: Any] = [:]

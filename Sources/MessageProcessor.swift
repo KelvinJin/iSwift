@@ -51,7 +51,7 @@ class MessageProcessor {
                 let _currentExecutionCount = executionCount
                 replyContent = ExecuteReply(status: .Ok, executionCount: _currentExecutionCount, userExpressions: nil)
                 if let executeRequest = message.content as? ExecuteRequest {
-                    execute(executeRequest.code, executionCount: _currentExecutionCount, parentHeader: requestHeader, metadata: [:])
+                    execute(message, cmd: executeRequest.code, executionCount: _currentExecutionCount, parentHeader: requestHeader, metadata: [:])
                 }
             case .IsCompleteReply:
                 let content = message.content as! IsCompleteRequest
@@ -74,32 +74,39 @@ class MessageProcessor {
             
             let replyMessage = Message(header: replyHeader, parentHeader: requestHeader, metadata: [:], content: replyContent)
             
+            // Sync the idents
+            replyMessage.idents = message.idents
+            
             outMessageQueue.add(replyMessage)
         }
     }
     
-    fileprivate static func execute(_ cmd: String, executionCount: Int, parentHeader: Header, metadata: [String: Any]) {
+    private static var IOPubMessageSerialQueue = DispatchQueue(label: "iSwiftCore.MessageProcessor.IOPubMessage")
+    
+    fileprivate static func execute(_ origin: Message, cmd: String, executionCount: Int, parentHeader: Header, metadata: [String: Any]) {
         if session.isEmpty {
             session = parentHeader.session
             
             // Sending starting status.
-            sendIOPubMessage(.Status, content: Status(executionState: "starting"), parentHeader: nil)
+            sendIOPubMessage(origin, type: .Status, content: Status(executionState: "starting"), parentHeader: nil)
         }
         
-        sendIOPubMessage(.Status, content: Status(executionState: "busy"), parentHeader: parentHeader)
+        sendIOPubMessage(origin, type: .Status, content: Status(executionState: "busy"), parentHeader: parentHeader)
         
         let result = replWrapper.runCommand(cmd).trim()
         let content = ExecuteResult(executionCount: executionCount, data: ["text/plain": result], metadata: [:])
         
-        sendIOPubMessage(.Status, content: Status(executionState: "idle"), parentHeader: parentHeader)
+        sendIOPubMessage(origin, type: .Status, content: Status(executionState: "idle"), parentHeader: parentHeader)
         
-        sendIOPubMessage(.ExecuteResult, content: content, parentHeader: parentHeader)
+        sendIOPubMessage(origin, type: .ExecuteResult, content: content, parentHeader: parentHeader)
     }
     
-    fileprivate static func sendIOPubMessage(_ type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: Any] = [:]) {
-        DispatchQueue.global(qos: .default).async { () -> Void in
+    fileprivate static func sendIOPubMessage(_ origin: Message, type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: Any] = [:]) {
+        IOPubMessageSerialQueue.async { () -> Void in
             let header = Header(session: session, msgType: type)
             let message = Message(header: header, parentHeader: parentHeader, metadata: metadata, content: content)
+            
+            message.idents = origin.idents
             NotificationCenter.default.post(name: Notification.Name(rawValue: "IOPubNotification"), object: message, userInfo: nil)
         }
     }

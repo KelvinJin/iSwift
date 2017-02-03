@@ -9,12 +9,53 @@
 import Foundation
 import ZeroMQ
 
+extension ZeroMQ.Message {
+    var toData: Data {
+        return Data(bytes: data, count: size)
+    }
+    
+    var toString: String? {
+        return String(data: toData, encoding: .utf8)
+    }
+}
+
 extension Socket {
     // Enable the ability to receive messages that are very long. Such as those over 1024 bytes.
     func receiveMessageString(_ mode: ReceiveMode = []) throws -> String? {
-        guard let message = try receiveMessage() else { return nil }
-        let data = Data(bytes: message.data, count: message.size)
-        return String(data: data, encoding: .utf8)
+        return try receiveMessage()?.toString
+    }
+    
+    func receiveMessageDataList(_ mode: ReceiveMode = []) throws -> [Data] {
+        var more = true
+        var result: [Data] = []
+        while more {
+            guard let message = try receiveMessage() else { break }
+            result.append(message.toData)
+            more = message.more
+        }
+        return result
+    }
+}
+
+extension String {
+    func toJSON() -> [String: Any]? {
+        guard let data = data(using: .utf8) else {
+            Logger.warning.print("String.toJSON: Can't create data.")
+            return nil
+        }
+        
+        return data.toJSON()
+    }
+}
+
+extension Data {
+    func toJSON() -> [String : Any]? {
+        guard let json = (try? JSONSerialization.jsonObject(with: self, options: [])) as? [String: Any] else {
+            Logger.info.print("Convert to JSON failed.")
+            return nil
+        }
+        
+        return json
     }
 }
 
@@ -25,44 +66,46 @@ class SocketIn {
         guard let _ = try? socket.getFileDescriptor() else { return }
         
         // Now, let's wait for the message identifier.
-        var messageBlobs: [String] = []
+        var messageBlobs: [Data] = []
         
         while true {
             do {
-                if let recv: String = try socket.receiveMessageString() {
-                    Logger.debug.print("Get socket string: \(recv)")
-                    if recv == Message.Delimiter {
-                        // It seems to be a new message coming.
-                        
-                        // FIXME: Find a way to make this read extra blobs.
-                        for _ in 0..<5 {
-                            if let data: String = try socket.receiveMessageString() {
-                                Logger.debug.print("Get socket string: \(data)")
-                                messageBlobs.append(data)
-                            }
-                        }
-                        
-                        do {
-                            // Let's finish the previous one.
-                            let message = try constructMessage(messageBlobs)
-                            
-                            // Added to the queue
-                            outMessageQueue.add(message)
-                        } catch let e {
-                            Logger.info.print(e)
-                        }
-                        
-                        // Remove the previous blobs.
-                        messageBlobs.removeAll()
-                    }
+                let datas = try socket.receiveMessageDataList()
+                let idx = datas.split(whereSeparator: { String(data: $0, encoding: .utf8) == Message.Delimiter })
+                
+                guard idx.count == 2 else {
+                    Logger.warning.print("Get invalid socket message")
+                    continue
                 }
+                
+                let idents = idx[0]
+                let messageList = idx[1]
+                
+                for data in messageList {
+                    Logger.debug.print("Get socket string: \(String(data: data, encoding: .utf8))")
+                    messageBlobs.append(data)
+                }
+                
+                do {
+                    // Let's finish the previous one.
+                    let message = try constructMessage(messageBlobs)
+                    message.idents = idents.map { $0 }
+                    
+                    // Added to the queue
+                    outMessageQueue.add(message)
+                } catch let e {
+                    Logger.info.print(e)
+                }
+                
+                // Remove the previous blobs.
+                messageBlobs.removeAll()
             } catch let e {
                 Logger.info.print(e)
             }
         }
     }
     
-    static fileprivate func constructMessage(_ messageBlobs: [String]) throws -> Message {
+    static fileprivate func constructMessage(_ messageBlobs: [Data]) throws -> Message {
         // Make sure there are enough blobs.
         guard messageBlobs.count >= 5 else {
             throw Error.socketError("message blobs are not enough.")
@@ -106,12 +149,12 @@ class SocketIn {
         
         // The rest would be extra blobs.
         Logger.debug.print("Parsing extraBlobs...")
-        let extraBlobs: [String] = messageBlobs.count >= 6 ? messageBlobs.suffix(from: 5).flatMap { $0 } : []
+        let extraBlobs: [Data] = messageBlobs.count >= 6 ? messageBlobs.suffix(from: 5).flatMap { $0 } : []
         
         return Message(signature: signature, header: header, parentHeader: parentHeader, metadata: metadata, content: content, extraBlobs: extraBlobs)
     }
     
-    static fileprivate func parse<T>(_ str: String, converter: (([String: Any]) -> T?)) throws -> T {
+    static fileprivate func parse<T>(_ str: Data, converter: (([String: Any]) -> T?)) throws -> T {
         guard let json = str.toJSON() else {
             print(str)
             throw Error.socketError("Parse \(str) to JSON failed.")

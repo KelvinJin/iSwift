@@ -142,11 +142,11 @@ class Shell {
         guard hasLaunched else { fatalError("The task has not been launched.") }
     }
     
-    private func posix(_ code: Int32) {
+    private func posix(_ code: Int32, line: Int = #line) {
         switch code {
         case 0: return
         case EBADF: fatalError("POSIX command failed with error: \(code) -- EBADF")
-        default: fatalError("POSIX command failed with error: \(code)")
+        default: fatalError("POSIX command failed with error: \(code) -- At line \(line)")
         }
     }
     

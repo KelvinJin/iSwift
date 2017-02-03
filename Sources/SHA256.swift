@@ -38,7 +38,7 @@ open class SHA256 {
     }
     
     // Takes a string representation of a hexadecimal number
-    func hexDigest() -> String {
-        return digest().map { $0.toHex() }.reduce("", +)
+    func hexDigest() -> Data {
+        return Data(bytes: digest())
     }
 }

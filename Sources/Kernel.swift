@@ -11,7 +11,7 @@ import ZeroMQ
 import CommandLineKit
 import Dispatch
 
-private let loggerLevel = 10
+private let loggerLevel = 30
 
 enum Error: Swift.Error {
     case socketError(String)
@@ -37,18 +37,6 @@ class Logger {
 
 let connectionFileOption = StringOption(shortFlag: "f", longFlag: "file", required: true,
     helpMessage: "Path to the output file.")
-
-extension String {    
-    func toJSON() -> [String: Any]? {
-        guard let data = data(using: String.Encoding.utf8),
-            let json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any] else {
-                Logger.info.print("Convert to JSON failed.")
-                return nil
-        }
-        
-        return json
-    }
-}
 
 open class Kernel {
     open static let sharedInstance = Kernel()

@@ -11,6 +11,7 @@ import Foundation
 enum TransportType: String {
     case TCP = "tcp"
     case UDP = "udp"
+    case IPC = "ipc"
 }
 
 enum SignatureSchemeType: String {
