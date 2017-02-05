@@ -14,17 +14,7 @@ import Dispatch
 private let SocketSendQueue = DispatchQueue(label: "iSwiftCore.Socket")
 private let EmptyDictionaryData = Message.EmptyDic.toData()
 
-extension Socket {
-    static func sendingMessage(_ socket: Socket, _ message: Message) throws {
-        SocketSendQueue.sync {
-            do {
-                try _sendingMessage(socket, message)
-            } catch {
-                Logger.critical.print(error)
-            }
-        }
-    }
-    
+extension Socket {    
     static func sendingMessage(_ socket: Socket, _ message: SerializedMessage) throws {
         SocketSendQueue.sync {
             do {
@@ -38,18 +28,6 @@ extension Socket {
                 Logger.critical.print(error)
             }
         }
-    }
-    
-    private static func _sendingMessage(_ socket: Socket, _ message: Message) throws {
-        var messageBlobs = [Message.Delimiter.toData()!, message.signature,
-                            message.header.toData(), message.parentHeader?.toData() ?? EmptyDictionaryData,message.metadata.toData(), message.content.toData()]
-
-        Logger.info.print("Sending message with idents count: \(message.idents.count)")
-        
-        // Don't forget the original identities.
-        messageBlobs.insert(contentsOf: message.idents, at: 0)
-        
-        try _sendMessageDataList(socket, datas: messageBlobs)
     }
     
     private static func _sendMessageDataList(_ socket: Socket, datas: [Data]) throws {

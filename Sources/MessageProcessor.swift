@@ -72,10 +72,7 @@ class MessageProcessor {
                 continue
             }
             
-            let replyMessage = Message(header: replyHeader, parentHeader: requestHeader, metadata: [:], content: replyContent)
-            
-            // Sync the idents
-            replyMessage.idents = message.idents
+            let replyMessage = Message(idents: message.idents, header: replyHeader, parentHeader: requestHeader, metadata: [:], content: replyContent, extraBlobs: [])
             
             outMessageQueue.add(replyMessage)
         }
@@ -104,9 +101,8 @@ class MessageProcessor {
     fileprivate static func sendIOPubMessage(_ origin: Message, type: MessageType, content: Contentable, parentHeader: Header?, metadata: [String: Any] = [:]) {
         IOPubMessageSerialQueue.async { () -> Void in
             let header = Header(session: session, msgType: type)
-            let message = Message(header: header, parentHeader: parentHeader, metadata: metadata, content: content)
+            let message = Message(idents: origin.idents, header: header, parentHeader: parentHeader, metadata: metadata, content: content, extraBlobs: [])
             
-            message.idents = origin.idents
             NotificationCenter.default.post(name: Notification.Name(rawValue: "IOPubNotification"), object: message, userInfo: nil)
         }
     }

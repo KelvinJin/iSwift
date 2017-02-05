@@ -28,15 +28,11 @@ enum MessageType: String {
     }
 }
 
-class Message {
+struct Message {
     static let Delimiter = "<IDS|MSG>"
     static let EmptyDic: [String: Any] = [:]
     
-    lazy var idents: [Data] = {
-        return [self.header.session.data(using: .utf8)].flatMap { $0 }
-    }()
-    
-    var signature: Data
+    let idents: [Data]
     
     /// The message header contains a pair of unique identifiers for the
     /// originating session and the actual message id, in addition to the
@@ -58,13 +54,4 @@ class Message {
     let content: Contentable
     
     let extraBlobs: [Data]
-    
-    init(signature: Data = Data(), header: Header, parentHeader: Header?, metadata: [String: Any], content: Contentable, extraBlobs: [Data] = []) {
-        self.signature = signature
-        self.header = header
-        self.parentHeader = parentHeader
-        self.metadata = metadata
-        self.content = content
-        self.extraBlobs = extraBlobs
-    }
 }

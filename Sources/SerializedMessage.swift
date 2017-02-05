@@ -66,7 +66,7 @@ struct SerializedMessage {
         
         let c = try parse(content, converter: converter)
         
-        return Message(signature: signature, header: h, parentHeader: p, metadata: m, content: c, extraBlobs: extraBlobs)
+        return Message(idents: idents, header: h, parentHeader: p, metadata: m, content: c, extraBlobs: extraBlobs)
     }
     
     static func fromMessage(_ message: Message, key: String) -> SerializedMessage {

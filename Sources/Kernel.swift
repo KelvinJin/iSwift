@@ -11,7 +11,7 @@ import ZeroMQ
 import CommandLineKit
 import Dispatch
 
-private let loggerLevel = 10
+private let loggerLevel = 30
 
 enum Error: Swift.Error {
     case socketError(String)
@@ -95,7 +95,7 @@ open class Kernel {
                 
                 if let resultMessage = notification.object as? Message {
                     do {
-                        try Socket.sendingMessage(ioPubSocket, resultMessage)
+                        try Socket.sendingMessage(ioPubSocket, SerializedMessage.fromMessage(resultMessage, key: connection.key))
                     } catch let e {
                         Logger.critical.print(e)
                     }
