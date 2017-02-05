@@ -11,7 +11,7 @@ import ZeroMQ
 import CommandLineKit
 import Dispatch
 
-private let loggerLevel = 30
+private let loggerLevel = 10
 
 enum Error: Swift.Error {
     case socketError(String)
@@ -66,6 +66,7 @@ open class Kernel {
             return
         }
         
+        print(connection)
         Logger.info.print("Current connection: \(connection)")
         listen(connection)
     }
@@ -151,10 +152,10 @@ open class Kernel {
     private func createMessageSocket(_ context: Context, transport: TransportType, ip: String, port: Int, key: String, type: SocketType) throws {
         let taskFactory = TaskFactory()
         let socket = try createSocket(context, transport: transport, ip: ip, port: port, type: type)
-        let inSocketMessageQueue = BlockingQueue<Message>()
+        let inSocketMessageQueue = BlockingQueue<SerializedMessage>()
         let decodedMessageQueue = BlockingQueue<Message>()
         let processedMessageQueue = BlockingQueue<Message>()
-        let encodedMessageQueue = BlockingQueue<Message>()
+        let encodedMessageQueue = BlockingQueue<SerializedMessage>()
         
         taskFactory.startNew {
             SocketIn.run(socket, outMessageQueue: inSocketMessageQueue)

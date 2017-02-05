@@ -12,6 +12,7 @@ import Dispatch
 
 // We can only send message one by one. This is for sure.
 private let SocketSendQueue = DispatchQueue(label: "iSwiftCore.Socket")
+private let EmptyDictionaryData = Message.EmptyDic.toData()
 
 extension Socket {
     static func sendingMessage(_ socket: Socket, _ message: Message) throws {
@@ -24,22 +25,31 @@ extension Socket {
         }
     }
     
+    static func sendingMessage(_ socket: Socket, _ message: SerializedMessage) throws {
+        SocketSendQueue.sync {
+            do {
+                var dataList = [Message.Delimiter.toData()!, message.signature, message.header, message.parentHeader, message.metadata, message.content]
+                
+                Logger.info.print("Sending message with idents count: \(message.idents.count)")
+                
+                dataList.insert(contentsOf: message.idents, at: 0)
+                try _sendMessageDataList(socket, datas: dataList)
+            } catch {
+                Logger.critical.print(error)
+            }
+        }
+    }
+    
     private static func _sendingMessage(_ socket: Socket, _ message: Message) throws {
-        let messageBlobs = [Message.Delimiter, "",
-                            message.header.toJSONString(), message.parentHeader?.toJSONString() ?? "{}", "{}",
-                            message.content.toJSONString()]
-        var dataBlobs = messageBlobs.flatMap { $0.data(using: .utf8) }
-        
+        var messageBlobs = [Message.Delimiter.toData()!, message.signature,
+                            message.header.toData(), message.parentHeader?.toData() ?? EmptyDictionaryData,message.metadata.toData(), message.content.toData()]
+
         Logger.info.print("Sending message with idents count: \(message.idents.count)")
         
-        guard messageBlobs.count == dataBlobs.count else {
-            Logger.warning.print("Converting to data error!")
-            throw Error.generalError("Converting to data error!")
-        }
+        // Don't forget the original identities.
+        messageBlobs.insert(contentsOf: message.idents, at: 0)
         
-        dataBlobs.insert(contentsOf: message.idents, at: 0)
-        
-        try _sendMessageDataList(socket, datas: dataBlobs)
+        try _sendMessageDataList(socket, datas: messageBlobs)
     }
     
     private static func _sendMessageDataList(_ socket: Socket, datas: [Data]) throws {

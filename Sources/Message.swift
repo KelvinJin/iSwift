@@ -30,6 +30,7 @@ enum MessageType: String {
 
 class Message {
     static let Delimiter = "<IDS|MSG>"
+    static let EmptyDic: [String: Any] = [:]
     
     lazy var idents: [Data] = {
         return [self.header.session.data(using: .utf8)].flatMap { $0 }
@@ -65,19 +66,5 @@ class Message {
         self.metadata = metadata
         self.content = content
         self.extraBlobs = extraBlobs
-    }
-    
-    func toSHA256(_ key: String) -> Data {
-        let digestor = SHA256(key: key)
-        
-        let emptyDict: [String: Any] = [:]
-        
-        digestor.update(header.toBytes())
-        digestor.update(parentHeader?.toBytes() ?? emptyDict.toBytes())
-        digestor.update(metadata.toBytes())
-        digestor.update(content.toBytes())
-        
-        return digestor.hexDigest()
-        
     }
 }

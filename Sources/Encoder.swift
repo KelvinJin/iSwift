@@ -9,20 +9,14 @@
 import Foundation
 
 class Encoder {
-    static func run(_ key: String, inMessageQueue: BlockingQueue<Message>, outMessageQueue: BlockingQueue<Message>) {
+    static func run(_ key: String, inMessageQueue: BlockingQueue<Message>, outMessageQueue: BlockingQueue<SerializedMessage>) {
         while true {
             // Take some message from the queue and check whether the signature matches the message.
-            var message = inMessageQueue.take()
+            let message = inMessageQueue.take()
             
             Logger.debug.print("Encoding new message...\(message.header.msgType)")
             
-            encode(key, message: &message)
-            outMessageQueue.add(message)
+            outMessageQueue.add(SerializedMessage.fromMessage(message, key: key))
         }
-    }
-    
-    static fileprivate func encode(_ key: String, message: inout Message) -> Message {
-        message.signature = message.toSHA256(key)
-        return message
     }
 }

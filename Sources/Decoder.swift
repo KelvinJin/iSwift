@@ -9,21 +9,25 @@
 import Foundation
 
 class Decoder {
-    static func run(_ key: String, inMessageQueue: BlockingQueue<Message>, outMessageQueue: BlockingQueue<Message>) {
+    static func run(_ key: String, inMessageQueue: BlockingQueue<SerializedMessage>, outMessageQueue: BlockingQueue<Message>) {
         while true {
             // Take some message from the queue and check whether the signature matches the message.
             let message = inMessageQueue.take()
             
-            Logger.debug.print("Decoding new message...\(message.header.msgType)")
+            Logger.debug.print("Decoding new message...")
             
-            if let decodedMessage = decode(key, message: message) {
-                outMessageQueue.add(decodedMessage)
+            let signature = SHA256(key: key, dataList: [message.header, message.parentHeader, message.metadata, message.content]).hexDigest()
+            
+            if message.signature != signature {
+                Logger.warning.print("Malformed incoming message with sigature \(message.signature.toUTF8String()) identity \(message.idents). The signature should be \(signature.toUTF8String())")
+                continue
+            }
+            
+            do {
+                outMessageQueue.add(try message.toMessage())
+            } catch {
+                Logger.warning.print(error)
             }
         }
-    }
-    
-    static fileprivate func decode(_ key: String, message: Message) -> Message? {
-//        return message.signature == message.toSHA256(key) ? message : nil
-        return message
     }
 }

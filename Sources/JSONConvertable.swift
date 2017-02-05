@@ -16,7 +16,7 @@ protocol JSONConvertable {
 
 extension JSONConvertable {
     func toData() -> Data { return toJSON().toData() }
-    func toBytes() -> [UInt8] { return toJSON().toBytes() }
+//    func toBytes() -> [UInt8] { return toJSON().toBytes() }
     func toJSONString() -> String {
         return (String(data: toData(), encoding: .utf8) ?? "")
     }
@@ -28,17 +28,8 @@ extension Dictionary {
             let bytes = try Jay(formatting: .minified).dataFromJson(any: self)
             return Data(bytes: bytes)
         } catch let e {
-            print("NSJSONSerialization Error: \(e)")
+            Logger.critical.print("NSJSONSerialization Error: \(e)")
             return Data()
         }
-    }
-    
-    func toBytes() -> [UInt8] {
-        let data = toData()
-        let count = data.count
-        var bytes = [UInt8](repeating: 0, count: count)
-        data.copyBytes(to: &bytes, count: count)
-        
-        return bytes
     }
 }
