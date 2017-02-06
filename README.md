@@ -7,7 +7,7 @@ swift package update
 To build:
 
 ```
-swift build -Xcc -IIncludes
+swift build
 ```
 
 To install jupyter kernel:
@@ -17,5 +17,5 @@ jupyter-kernelspec install swift
 
 To run jupyter:
 ```
-jupyter notebook --Session.key="b''"
+jupyter notebook
 ```
