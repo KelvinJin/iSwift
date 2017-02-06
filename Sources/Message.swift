@@ -15,6 +15,8 @@ enum MessageType: String {
     case ExecuteReply = "execute_reply"
     case HistoryRequest = "history_request"
     case HistoryReply = "history_reply"
+    case CompleteRequest = "complete_request"
+    case CompleteReply = "complete_reply"
     case IsCompleteRequest = "is_complete_request"
     case IsCompleteReply = "is_complete_reply"
     case ExecuteResult = "execute_result"

@@ -60,6 +60,8 @@ struct SerializedMessage {
             converter = IsCompleteRequest.fromJSON
         case .ShutdownRequest:
             converter = ShutdownRequest.fromJSON
+        case .CompleteRequest:
+            converter = CompleteRequest.fromJSON
         default:
             throw Error.socketError("Undefined message content.")
         }
