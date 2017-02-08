@@ -8,7 +8,7 @@ services:
   - docker
 
 script:
-  - docker build -t jinw1990/iswift.linux:travis
+  - docker build -t jinw1990/iswift.linux:travis .
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
