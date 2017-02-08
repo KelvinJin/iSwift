@@ -1,6 +1,8 @@
 sudo: required
 
-language: swift
+language: generic
+
+os: linux
 
 services:
   - docker
