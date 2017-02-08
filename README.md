@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/KelvinJin/iSwift.Linux.svg?branch=master)](https://travis-ci.org/KelvinJin/iSwift.Linux)
+
 iSwift is the kernel IPython/Notebook implementation for Swift programming language.
 
 It can:
