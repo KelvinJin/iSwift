@@ -30,30 +30,74 @@ enum MessageType: String {
     }
 }
 
-struct Message {
-    static let Delimiter = "<IDS|MSG>"
-    static let EmptyDic: [String: Any] = [:]
-    
-    let idents: [Data]
-    
-    /// The message header contains a pair of unique identifiers for the
-    /// originating session and the actual message id, in addition to the
-    /// username for the process that generated the message.  This is useful in
-    /// collaborative settings where multiple users may be interacting with the
-    /// same kernel simultaneously, so that frontends can label the various
-    /// messages in a meaningful way.
-    let header: Header
-    
-    /// In a chain of messages, the header from the parent is copied so that
-    /// clients can track where messages come from.
-    let parentHeader: Header?
-    
-    /// Any metadata associated with the message.
-    let metadata: [String: Any]
-    
-    /// The actual content of the message must be a dict, whose structure
-    /// depends on the message type.
-    let content: Contentable
-    
-    let extraBlobs: [Data]
-}
+#if os(Linux)
+    class Message {
+        static let Delimiter = "<IDS|MSG>"
+        static let EmptyDic: [String: Any] = [:]
+        
+        let idents: [Data]
+        
+        /// The message header contains a pair of unique identifiers for the
+        /// originating session and the actual message id, in addition to the
+        /// username for the process that generated the message.  This is useful in
+        /// collaborative settings where multiple users may be interacting with the
+        /// same kernel simultaneously, so that frontends can label the various
+        /// messages in a meaningful way.
+        let header: Header
+        
+        /// In a chain of messages, the header from the parent is copied so that
+        /// clients can track where messages come from.
+        let parentHeader: Header?
+        
+        /// Any metadata associated with the message.
+        let metadata: [String: Any]
+        
+        /// The actual content of the message must be a dict, whose structure
+        /// depends on the message type.
+        let content: Contentable
+        
+        let extraBlobs: [Data]
+        
+        init(idents: [Data],
+             header: Header,
+             parentHeader: Header?,
+             metadata: [String: Any],
+             content: Contentable,
+             extraBlobs: [Data]) {
+            self.idents = idents
+            self.header = header
+            self.parentHeader = parentHeader
+            self.metadata = metadata
+            self.content = content
+            self.extraBlobs = extraBlobs
+        }
+    }
+#else
+    struct Message {
+        static let Delimiter = "<IDS|MSG>"
+        static let EmptyDic: [String: Any] = [:]
+        
+        let idents: [Data]
+        
+        /// The message header contains a pair of unique identifiers for the
+        /// originating session and the actual message id, in addition to the
+        /// username for the process that generated the message.  This is useful in
+        /// collaborative settings where multiple users may be interacting with the
+        /// same kernel simultaneously, so that frontends can label the various
+        /// messages in a meaningful way.
+        let header: Header
+        
+        /// In a chain of messages, the header from the parent is copied so that
+        /// clients can track where messages come from.
+        let parentHeader: Header?
+        
+        /// Any metadata associated with the message.
+        let metadata: [String: Any]
+        
+        /// The actual content of the message must be a dict, whose structure
+        /// depends on the message type.
+        let content: Contentable
+        
+        let extraBlobs: [Data]
+    }
+#endif

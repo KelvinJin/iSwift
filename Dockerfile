@@ -16,7 +16,7 @@
 
 # Dockerfile to build a Docker image with the Swift binaries and its dependencies.
 
-FROM norionomura/sourcekit:3120170131a
+FROM norionomura/sourcekit:302
 
 # Set environment variables for image
 ENV HOME /root
@@ -24,6 +24,9 @@ ENV WORK_DIR /root
 
 # Set WORKDIR
 WORKDIR ${WORK_DIR}
+
+RUN apt-get update && \
+ apt-get -y install build-essential
 
 # Install ZMQ
 RUN cd /tmp/ \
@@ -34,7 +37,7 @@ RUN cd /tmp/ \
     && make \
     && make install
 
-RUN apt-get install openssl libssl-dev
+RUN apt-get -y install openssl libssl-dev
 
 #Install Pip3
 RUN apt-get install -y python3-pip
@@ -49,7 +52,7 @@ WORKDIR ${WORK_DIR}/iSwift
 
 RUN swift package update
 RUN swift build
-RUN jupyter kernelspec install swift3
+RUN jupyter kernelspec install iSwiftKernel
 
 EXPOSE 8888
 

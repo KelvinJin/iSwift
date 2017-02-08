@@ -3,3 +3,5 @@ iSwift.xcodeproj/
 .build/
 .dockerignore
 Dockerfile
+LocalKernel/
+README.md
