@@ -1,0 +1,13 @@
+sudo: required
+
+language: swift
+
+services:
+  - docker
+
+script:
+  - docker build -t jinw1990/iswift.linux:travis
+
+deploy:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker push jinw1990/iswift.linux:travis
