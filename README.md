@@ -1,5 +1,3 @@
-----
-
 # iSwift
 
 [![Build Status](https://travis-ci.org/KelvinJin/iSwift.Linux.svg?branch=master)](https://travis-ci.org/KelvinJin/iSwift.Linux)
@@ -8,6 +6,7 @@ iSwift is the kernel IPython/Notebook implementation for Swift programming langu
 
 It can:
   + Execute swift code on the Jupyter Notebook web editor, Jupyter console as well as Jupyter qtconsole.
+  + Import Foundatation/Dispatch and other Buildin libraries.
   + Autocomplete swift code by pressing tab ↹.
   + Support encryption.
   + Support Linux/macOS
@@ -15,6 +14,8 @@ It can:
 ## Demo
 
 http://jupyter.uthoft.com
+
+![Imgur](http://i.imgur.com/9NpJckS.gif)
 
 ## Requirements
 
