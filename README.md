@@ -55,9 +55,9 @@ with your local clone path.
 jupyter-kernelspec install Folder/that/has/kernel.json
 ```
 
-5. Run Jupyter Notebook:
+5. Run Jupyter Notebook (token needs to be empty):
 ```
-jupyter notebook
+jupyter notebook --NotebookApp.token=
 ```
 
 ## Linux Installation
