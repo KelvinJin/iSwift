@@ -18,8 +18,6 @@ It can:
 
 ## Demo
 
-~http://jupyter.uthoft.com~
-
 ![Imgur](http://i.imgur.com/9NpJckS.gif)
 
 ## Requirements
